@@ -1,0 +1,134 @@
+{
+    "elements": [
+        {
+            "type": "Label",
+            "caption": "Wetterstation Kachel – Flackerfreie Kachel-Visualisierung mit dynamischer Windrose, Beaufort-Skala & Temperaturanzeigen (HTML-SDK)"
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "Sensoren & Variablen (aus TFA / Wetterstation)",
+            "items": [
+                {
+                    "type": "SelectVariable",
+                    "name": "WindDirectionVariable",
+                    "caption": "Windrichtung (z.B. ID 38465, Grad 0–360)"
+                },
+                {
+                    "type": "SelectVariable",
+                    "name": "WindSpeedVariable",
+                    "caption": "Windgeschwindigkeit (z.B. ID 21228, in m/s)"
+                },
+                {
+                    "type": "SelectVariable",
+                    "name": "GustVariable",
+                    "caption": "Windböe (z.B. ID 58720, in m/s)"
+                },
+                {
+                    "type": "SelectVariable",
+                    "name": "PreviousDirectionVariable",
+                    "caption": "Vorherige Windrichtung (z.B. ID 44797, optionaler Geisterzeiger)"
+                },
+                {
+                    "type": "SelectVariable",
+                    "name": "OutdoorTempVariable",
+                    "caption": "Außentemperatur Hauptsensor (z.B. ID 13145 TA Wärmepumpe)"
+                },
+                {
+                    "type": "SelectVariable",
+                    "name": "SecondaryTempVariable",
+                    "caption": "Zusatz-Temperatur (z.B. ID 31094 Kaninchenstall)"
+                },
+                {
+                    "type": "SelectVariable",
+                    "name": "RainVariable",
+                    "caption": "Regen-/Trocken-Sensor (z.B. ID 35022 'Aktuell trocken')"
+                },
+                {
+                    "type": "SelectVariable",
+                    "name": "BatteryVariable",
+                    "caption": "Batteriestatus (z.B. ID 15523)"
+                }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "Anzeige & Formatierung",
+            "items": [
+                {
+                    "type": "ValidationTextBox",
+                    "name": "TileTitle",
+                    "caption": "Kacheltitel (z.B. 'Wetterstation')"
+                },
+                {
+                    "type": "Select",
+                    "name": "WindUnit",
+                    "caption": "Haupteinheit für Windgeschwindigkeit",
+                    "options": [
+                        { "caption": "km/h (Kilometer pro Stunde)", "value": "kmh" },
+                        { "caption": "m/s (Meter pro Sekunde)", "value": "ms" },
+                        { "caption": "kn (Knoten)", "value": "kn" }
+                    ]
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "ShowBeaufort",
+                    "caption": "Beaufort-Skala mit Textbezeichnung anzeigen"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "ShowSecondaryTemp",
+                    "caption": "Zusatz-Temperatur (Stall) anzeigen"
+                },
+                {
+                    "type": "ValidationTextBox",
+                    "name": "SecondaryTempLabel",
+                    "caption": "Beschriftung Zusatz-Temperatur (z.B. 'Stall')"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "ShowRainStatus",
+                    "caption": "Regen-/Trocken-Status-Badge anzeigen"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "ShowBatteryStatus",
+                    "caption": "Batteriewarnung / Batteriestatus anzeigen"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "ShowPreviousDirection",
+                    "caption": "Vorherige Windrichtung als Geisterzeiger einblenden"
+                }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "Farben & Akzente",
+            "items": [
+                {
+                    "type": "SelectColor",
+                    "name": "NeedleColor",
+                    "caption": "Farbe der Windnadel (z.B. Cyan/Türkis #00CDAB)"
+                },
+                {
+                    "type": "SelectColor",
+                    "name": "NorthMarkerColor",
+                    "caption": "Farbe des Nordzeigers / N-Markers (z.B. Rot #F43F5E)"
+                },
+                {
+                    "type": "SelectColor",
+                    "name": "GustColor",
+                    "caption": "Farbe der Böenanzeige (z.B. Orange #F59E0B)"
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "type": "Button",
+            "caption": "Wetter-Kachel aktualisieren",
+            "onClick": "WSTILE_RefreshWeather($id);"
+        }
+    ],
+    "status": []
+}

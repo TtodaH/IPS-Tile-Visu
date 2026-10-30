@@ -1,0 +1,34 @@
+{
+    "translations": {
+        "de": {
+            "Tile Template – Universelle Vorlage für IP-Symcon 7.1+ Kachel-Visualisierungen (HTML-SDK)": "Tile Template – Universelle Vorlage für IP-Symcon 7.1+ Kachel-Visualisierungen (HTML-SDK)",
+            "Variablen-Verknüpfung": "Variablen-Verknüpfung",
+            "Hauptvariable (Wertanzeige / Steuerung)": "Hauptvariable (Wertanzeige / Steuerung)",
+            "Sekundärvariable (Zusatzinfo, z. B. Sollwert / Status)": "Sekundärvariable (Zusatzinfo, z. B. Sollwert / Status)",
+            "Kachel-Design & Beschriftung": "Kachel-Design & Beschriftung",
+            "Kacheltitel": "Kacheltitel",
+            "Untertitel / Bereich": "Untertitel / Bereich",
+            "Akzentfarbe": "Akzentfarbe",
+            "Icon (FontAwesome / Symcon, z.B. fa-gauge-high oder fa-bolt)": "Icon (FontAwesome / Symcon, z.B. fa-gauge-high oder fa-bolt)",
+            "Interaktion & Schalter": "Interaktion & Schalter",
+            "Aktions-Button anzeigen": "Aktions-Button anzeigen",
+            "Button-Beschriftung": "Button-Beschriftung",
+            "Kachel-Status aktualisieren": "Kachel-Status aktualisieren"
+        },
+        "en": {
+            "Tile Template – Universelle Vorlage für IP-Symcon 7.1+ Kachel-Visualisierungen (HTML-SDK)": "Tile Template – Universal Blueprint for IP-Symcon 7.1+ Tile Visualizations (HTML-SDK)",
+            "Variablen-Verknüpfung": "Variable Linking",
+            "Hauptvariable (Wertanzeige / Steuerung)": "Primary Variable (Value display / Control)",
+            "Sekundärvariable (Zusatzinfo, z. B. Sollwert / Status)": "Secondary Variable (Additional info, e.g. Target / Status)",
+            "Kachel-Design & Beschriftung": "Tile Design & Labels",
+            "Kacheltitel": "Tile Title",
+            "Untertitel / Bereich": "Subtitle / Area",
+            "Akzentfarbe": "Accent Color",
+            "Icon (FontAwesome / Symcon, z.B. fa-gauge-high oder fa-bolt)": "Icon (FontAwesome / Symcon, e.g. fa-gauge-high or fa-bolt)",
+            "Interaktion & Schalter": "Interaction & Controls",
+            "Aktions-Button anzeigen": "Show Action Button",
+            "Button-Beschriftung": "Button Label",
+            "Kachel-Status aktualisieren": "Refresh Tile Status"
+        }
+    }
+}

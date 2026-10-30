@@ -1,0 +1,74 @@
+{
+    "elements": [
+        {
+            "type": "Label",
+            "caption": "Tile Template – Universelle Vorlage für IP-Symcon 7.1+ Kachel-Visualisierungen (HTML-SDK)"
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "Variablen-Verknüpfung",
+            "items": [
+                {
+                    "type": "SelectVariable",
+                    "name": "PrimaryVariable",
+                    "caption": "Hauptvariable (Wertanzeige / Steuerung)"
+                },
+                {
+                    "type": "SelectVariable",
+                    "name": "SecondaryVariable",
+                    "caption": "Sekundärvariable (Zusatzinfo, z. B. Sollwert / Status)"
+                }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "Kachel-Design & Beschriftung",
+            "items": [
+                {
+                    "type": "ValidationTextBox",
+                    "name": "TileTitle",
+                    "caption": "Kacheltitel"
+                },
+                {
+                    "type": "ValidationTextBox",
+                    "name": "TileSubtitle",
+                    "caption": "Untertitel / Bereich"
+                },
+                {
+                    "type": "SelectColor",
+                    "name": "AccentColor",
+                    "caption": "Akzentfarbe"
+                },
+                {
+                    "type": "ValidationTextBox",
+                    "name": "TileIcon",
+                    "caption": "Icon (FontAwesome / Symcon, z.B. fa-gauge-high oder fa-bolt)"
+                }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "Interaktion & Schalter",
+            "items": [
+                {
+                    "type": "CheckBox",
+                    "name": "ShowActionButton",
+                    "caption": "Aktions-Button anzeigen"
+                },
+                {
+                    "type": "ValidationTextBox",
+                    "name": "ActionButtonLabel",
+                    "caption": "Button-Beschriftung"
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "type": "Button",
+            "caption": "Kachel-Status aktualisieren",
+            "onClick": "TLTMP_RefreshTile($id);"
+        }
+    ],
+    "status": []
+}

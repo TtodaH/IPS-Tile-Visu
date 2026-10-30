@@ -1,0 +1,12 @@
+{
+    "id": "{9269958E-9EC8-4A9F-98AA-E763FED9977D}",
+    "name": "Weather Station Tile",
+    "type": 3,
+    "vendor": "Thomas Hellstern",
+    "aliases": ["Wetterstation Kachel", "Wetter-Kachel", "Windrose Kachel"],
+    "parentRequirements": [],
+    "childRequirements": [],
+    "implemented": [],
+    "prefix": "WSTILE",
+    "url": "https://github.com/TtodaH/IPS-Tile-Visu"
+}

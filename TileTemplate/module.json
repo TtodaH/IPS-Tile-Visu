@@ -1,0 +1,12 @@
+{
+    "id": "{FE7A0430-9B8B-4FBC-8A2C-F2D0AE51AB23}",
+    "name": "Tile Template",
+    "type": 3,
+    "vendor": "Thomas Hellstern",
+    "aliases": ["TileVisu Template", "Kachel Template"],
+    "parentRequirements": [],
+    "childRequirements": [],
+    "implemented": [],
+    "prefix": "TLTMP",
+    "url": "https://github.com/TtodaH/IPS-Tile-Visu"
+}

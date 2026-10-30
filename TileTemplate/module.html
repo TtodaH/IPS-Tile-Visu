@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>TileVisu Template</title>
+    <!-- IP-Symcon Icons / FontAwesome support falls im System vorhanden -->
+    <script src="/icons.js" crossorigin="anonymous"></script>
+
+    <style>
+        :root {
+            --accent-color: #00CDAB;
+            --accent-glow: rgba(0, 205, 171, 0.18);
+            --bg-color: transparent;
+            --text-primary: #F8FAFC;
+            --text-secondary: #94A3B8;
+            --card-surface: rgba(255, 255, 255, 0.04);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --btn-bg: rgba(255, 255, 255, 0.08);
+            --btn-hover: rgba(255, 255, 255, 0.14);
+        }
+
+        /* Unterstützung des IP-Symcon visuellen Themas (Dark/Light) */
+        @media (prefers-color-scheme: light) {
+            :root {
+                --text-primary: #0F172A;
+                --text-secondary: #64748B;
+                --card-surface: rgba(0, 0, 0, 0.03);
+                --card-border: rgba(0, 0, 0, 0.06);
+                --btn-bg: rgba(0, 0, 0, 0.05);
+                --btn-hover: rgba(0, 0, 0, 0.09);
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: var(--bg-color);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text-primary);
+        }
+
+        /* Kachel-Container mit Container Queries */
+        .tile-root {
+            container-type: size;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: clamp(10px, 4cqw, 16px);
+            background: var(--card-surface);
+            border-radius: 12px;
+            box-sizing: border-box;
+            transition: background 0.3s ease;
+        }
+
+        /* Header: Icon, Titel, Untertitel */
+        .tile-header {
+            display: flex;
+            align-items: center;
+            gap: clamp(8px, 2.5cqw, 12px);
+            width: 100%;
+            flex-shrink: 0;
+        }
+
+        .tile-icon-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: clamp(28px, 9cqw, 36px);
+            height: clamp(28px, 9cqw, 36px);
+            border-radius: 8px;
+            background: var(--accent-glow);
+            color: var(--accent-color);
+            flex-shrink: 0;
+            font-size: clamp(14px, 4.5cqw, 18px);
+            transition: transform 0.2s ease, background 0.3s ease, color 0.3s ease;
+        }
+
+        .tile-title-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .tile-title {
+            font-size: clamp(12px, 3.8cqw, 15px);
+            font-weight: 700;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.2;
+        }
+
+        .tile-subtitle {
+            font-size: clamp(10px, 3.2cqw, 12px);
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.2;
+            margin-top: 1px;
+        }
+
+        /* Body: Hero Value & Status */
+        .tile-body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            flex: 1 1 auto;
+            margin: clamp(4px, 1.5cqh, 12px) 0;
+            min-height: 0;
+        }
+
+        .primary-value {
+            font-size: clamp(22px, min(10cqw, 12cqh), 36px);
+            font-weight: 800;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+            line-height: 1.1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+            transition: color 0.2s ease;
+        }
+
+        .secondary-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: clamp(3px, 1cqh, 6px);
+            padding: 3px 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            border-radius: 6px;
+            font-size: clamp(10px, 3.2cqw, 12px);
+            color: var(--text-secondary);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .secondary-badge.hidden {
+            display: none;
+        }
+
+        /* Footer & Aktionsbutton */
+        .tile-footer {
+            width: 100%;
+            flex-shrink: 0;
+        }
+
+        .action-btn {
+            width: 100%;
+            height: clamp(30px, 8cqh, 38px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--btn-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: clamp(11.5px, 3.5cqw, 13.5px);
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.15s ease-in-out;
+        }
+
+        .action-btn:hover {
+            background: var(--btn-hover);
+            border-color: rgba(255, 255, 255, 0.16);
+        }
+
+        .action-btn:active {
+            transform: scale(0.97);
+            filter: brightness(1.2);
+        }
+
+        .action-btn.hidden {
+            display: none;
+        }
+
+        /* Live Update Puls-Effekt */
+        .pulse-update {
+            animation: pulse-animation 0.45s ease-out;
+        }
+
+        @keyframes pulse-animation {
+            0%   { opacity: 0.6; transform: scale(0.98); }
+            50%  { opacity: 1;   transform: scale(1.02); }
+            100% { opacity: 1;   transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="tile-root" id="tileRoot">
+
+        <!-- Header -->
+        <div class="tile-header">
+            <div class="tile-icon-box" id="iconBox">
+                <i id="tileIcon" class="fa-solid fa-bolt"></i>
+            </div>
+            <div class="tile-title-group">
+                <div class="tile-title" id="tileTitle">Kachel-Titel</div>
+                <div class="tile-subtitle" id="tileSubtitle">Status & Steuerung</div>
+            </div>
+        </div>
+
+        <!-- Body: Wertanzeige -->
+        <div class="tile-body">
+            <div class="primary-value" id="primaryValue">--</div>
+            <div class="secondary-badge" id="secondaryBadge">
+                <span id="secondaryText">Zusatz: --</span>
+            </div>
+        </div>
+
+        <!-- Footer: Schalter / Aktion -->
+        <div class="tile-footer">
+            <button class="action-btn" id="actionBtn" onclick="triggerAction(event)">
+                <span id="btnLabel">Umschalten</span>
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        /**
+         * IP-Symcon 7.1+ HTML-SDK Empfängerfunktion
+         * Wird automatisch bei UpdateVisualizationValue(...) aus PHP aufgerufen!
+         * WICHTIG: Kein DOM-Neubau, kein Flackern, sondern direkte DOM-Manipulation!
+         */
+        function handleMessage(data) {
+            if (!data) return;
+
+            let payload = data;
+            if (typeof data === 'string') {
+                try {
+                    payload = JSON.parse(data);
+                } catch (e) {
+                    console.error('Fehler beim Parsen der Tile-Nachricht:', e);
+                    return;
+                }
+            }
+
+            const root = document.documentElement;
+
+            // 1. Akzentfarbe anpassen
+            if (payload.accentColor) {
+                root.style.setProperty('--accent-color', payload.accentColor);
+                // Dynamische Hex zu RGBA Glow-Berechnung
+                const hex = payload.accentColor.replace('#', '');
+                if (hex.length === 6) {
+                    const r = parseInt(hex.substring(0, 2), 16);
+                    const g = parseInt(hex.substring(2, 4), 16);
+                    const b = parseInt(hex.substring(4, 6), 16);
+                    root.style.setProperty('--accent-glow', `rgba(${r}, ${g}, ${b}, 0.22)`);
+                }
+            }
+
+            // 2. Metadaten (Titel & Untertitel)
+            if (payload.title !== undefined) {
+                document.getElementById('tileTitle').textContent = payload.title;
+            }
+            if (payload.subtitle !== undefined) {
+                document.getElementById('tileSubtitle').textContent = payload.subtitle;
+            }
+
+            // 3. Icon
+            if (payload.icon) {
+                const iconElem = document.getElementById('tileIcon');
+                if (iconElem) {
+                    iconElem.className = payload.icon.includes('fa-') ? payload.icon : 'fa-solid ' + payload.icon;
+                }
+            }
+
+            // 4. Primärwert (Hauptanzeige)
+            if (payload.primary) {
+                const valElem = document.getElementById('primaryValue');
+                if (valElem) {
+                    const newText = payload.primary.formatted !== undefined ? payload.primary.formatted : '--';
+                    if (valElem.textContent !== newText) {
+                        valElem.textContent = newText;
+                        valElem.classList.remove('pulse-update');
+                        void valElem.offsetWidth; // Force Reflow für Animation
+                        valElem.classList.add('pulse-update');
+                    }
+                }
+            }
+
+            // 5. Sekundärwert (Badge)
+            const badge = document.getElementById('secondaryBadge');
+            const secText = document.getElementById('secondaryText');
+            if (payload.secondary && payload.secondary.exists) {
+                badge.classList.remove('hidden');
+                secText.textContent = payload.secondary.formatted;
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            // 6. Aktionsbutton
+            const btn = document.getElementById('actionBtn');
+            const btnLabel = document.getElementById('btnLabel');
+            if (payload.showActionButton) {
+                btn.classList.remove('hidden');
+                if (payload.buttonLabel) {
+                    btnLabel.textContent = payload.buttonLabel;
+                }
+            } else {
+                btn.classList.add('hidden');
+            }
+        }
+
+        /**
+         * Interaktion an IP-Symcon PHP-Modul senden
+         */
+        function triggerAction(event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            // Optisches Klick-Feedback
+            const btn = document.getElementById('actionBtn');
+            btn.style.filter = 'brightness(1.3)';
+            setTimeout(() => { btn.style.filter = ''; }, 200);
+
+            // IP-Symcon HTML SDK requestAction Call
+            if (typeof requestAction === 'function') {
+                requestAction('actionButton', true);
+            } else {
+                console.log('[Dev-Preview] requestAction("actionButton", true)');
+            }
+        }
+
+        // Falls initial beim Laden bereits Startdaten vorhanden sind
+        if (window.__INITIAL_DATA__) {
+            handleMessage(window.__INITIAL_DATA__);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+    "id": "{CEAAFB7F-482C-4631-AD25-82C997474DAD}",
+    "name": "IPS-Tile-Visu",
+    "author": "Thomas Hellstern",
+    "url": "https://github.com/TtodaH/IPS-Tile-Visu",
+    "compatibility": {
+        "version": "7.1"
+    },
+    "version": "1.0.0",
+    "build": 1,
+    "date": 0
+}
