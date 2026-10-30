@@ -130,16 +130,27 @@ class WeatherStationTile extends IPSModule
             $this->UnregisterReference($refID);
         }
 
-        // 3. Konfigurierte Variablen registrieren
+        // 3. Konfigurierte Variablen registrieren & Child-Statusvariablen für Vollbild/Detailansicht pflegen
+        $dirID     = $this->ReadPropertyInteger('WindDirectionVariable');
+        $speedID   = $this->ReadPropertyInteger('WindSpeedVariable');
+        $gustID    = $this->ReadPropertyInteger('GustVariable');
+        $prevDirID = $this->ReadPropertyInteger('PreviousDirectionVariable');
+        $tempOutID = $this->ReadPropertyInteger('OutdoorTempVariable');
+        $tempSecID = $this->ReadPropertyInteger('SecondaryTempVariable');
+        $rainID    = $this->ReadPropertyInteger('RainVariable');
+        $batteryID = $this->ReadPropertyInteger('BatteryVariable');
+
+        $this->MaintainVariable('OutdoorTemperature', $this->Translate('Außentemperatur'), 2, '~Temperature', 1, $tempOutID > 0);
+        $this->MaintainVariable('WindSpeed', $this->Translate('Windgeschwindigkeit'), 2, '~WindSpeed.ms', 2, $speedID > 0);
+        $this->MaintainVariable('Gust', $this->Translate('Böe'), 2, '~WindSpeed.ms', 3, $gustID > 0);
+        $this->MaintainVariable('WindDirection', $this->Translate('Windrichtung'), 2, '~WindDirection.Text', 4, $dirID > 0);
+        $secLabel = $this->ReadPropertyString('SecondaryTempLabel');
+        $this->MaintainVariable('SecondaryTemperature', $secLabel ? $secLabel : $this->Translate('Sekundärtemperatur'), 2, '~Temperature', 5, $tempSecID > 0);
+        $this->MaintainVariable('Rain', $this->Translate('Regen'), 0, '~Rain', 6, $rainID > 0);
+        $this->MaintainVariable('Battery', $this->Translate('Batterie'), 0, '~Battery', 7, $batteryID > 0);
+
         $sensorVars = [
-            $this->ReadPropertyInteger('WindDirectionVariable'),
-            $this->ReadPropertyInteger('WindSpeedVariable'),
-            $this->ReadPropertyInteger('GustVariable'),
-            $this->ReadPropertyInteger('PreviousDirectionVariable'),
-            $this->ReadPropertyInteger('OutdoorTempVariable'),
-            $this->ReadPropertyInteger('SecondaryTempVariable'),
-            $this->ReadPropertyInteger('RainVariable'),
-            $this->ReadPropertyInteger('BatteryVariable')
+            $dirID, $speedID, $gustID, $prevDirID, $tempOutID, $tempSecID, $rainID, $batteryID
         ];
 
         foreach ($sensorVars as $varID) {
@@ -213,6 +224,36 @@ class WeatherStationTile extends IPSModule
     {
         $payload = $this->GetWeatherPayload();
         $this->UpdateVisualizationValue(json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
+        // Child-Variablen für Symcon Vollbild- / Detailansicht synchronisieren
+        $tempOutID = $this->ReadPropertyInteger('OutdoorTempVariable');
+        if ($tempOutID > 0 && @IPS_VariableExists($tempOutID)) {
+            $this->SetValue('OutdoorTemperature', (float)GetValue($tempOutID));
+        }
+        $speedID = $this->ReadPropertyInteger('WindSpeedVariable');
+        if ($speedID > 0 && @IPS_VariableExists($speedID)) {
+            $this->SetValue('WindSpeed', (float)GetValue($speedID));
+        }
+        $gustID = $this->ReadPropertyInteger('GustVariable');
+        if ($gustID > 0 && @IPS_VariableExists($gustID)) {
+            $this->SetValue('Gust', (float)GetValue($gustID));
+        }
+        $dirID = $this->ReadPropertyInteger('WindDirectionVariable');
+        if ($dirID > 0 && @IPS_VariableExists($dirID)) {
+            $this->SetValue('WindDirection', (float)GetValue($dirID));
+        }
+        $tempSecID = $this->ReadPropertyInteger('SecondaryTempVariable');
+        if ($tempSecID > 0 && @IPS_VariableExists($tempSecID)) {
+            $this->SetValue('SecondaryTemperature', (float)GetValue($tempSecID));
+        }
+        $rainID = $this->ReadPropertyInteger('RainVariable');
+        if ($rainID > 0 && @IPS_VariableExists($rainID)) {
+            $this->SetValue('Rain', (bool)GetValue($rainID));
+        }
+        $batteryID = $this->ReadPropertyInteger('BatteryVariable');
+        if ($batteryID > 0 && @IPS_VariableExists($batteryID)) {
+            $this->SetValue('Battery', (bool)GetValue($batteryID));
+        }
     }
 
     /**

@@ -16,21 +16,10 @@
             --text-primary: #F8FAFC;
             --text-secondary: #94A3B8;
             --text-muted: #64748B;
-            --card-surface: transparent;
+            --card-surface: #181A20;
             --divider-color: rgba(255, 255, 255, 0.08);
-            --badge-bg: rgba(255, 255, 255, 0.05);
-            --badge-border: rgba(255, 255, 255, 0.1);
-        }
-
-        @media (prefers-color-scheme: light) {
-            :root {
-                --text-primary: #0F172A;
-                --text-secondary: #475569;
-                --text-muted: #94A3B8;
-                --divider-color: rgba(0, 0, 0, 0.08);
-                --badge-bg: rgba(0, 0, 0, 0.04);
-                --badge-border: rgba(0, 0, 0, 0.08);
-            }
+            --badge-bg: rgba(255, 255, 255, 0.06);
+            --badge-border: rgba(255, 255, 255, 0.12);
         }
 
         * {
@@ -47,23 +36,23 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background: transparent;
+            background: #181A20;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             color: var(--text-primary);
         }
 
-        /* Hauptcontainer mit Container Queries */
+        /* Hauptcontainer */
         .wr-container {
-            container-type: size;
             width: 100%;
             height: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: space-between;
-            padding: 6px 12px;
+            padding: 6px 10px;
             box-sizing: border-box;
             overflow: hidden;
+            background: #181A20;
         }
 
         /* Status-Leiste oben (Batterie & Regen) */
@@ -73,7 +62,7 @@
             justify-content: space-between;
             width: 100%;
             flex-shrink: 0;
-            font-size: clamp(8.5px, 2.5cqw, 11px);
+            font-size: 10px;
             font-weight: 600;
             min-height: 0;
             margin-bottom: 2px;
@@ -111,7 +100,7 @@
             display: none !important;
         }
 
-        /* Hero-Bereich (Windrose): füllt flexibel den Restplatz aus */
+        /* Hero-Bereich (Windrose) */
         .wr-compass-hero {
             display: flex;
             flex-direction: column;
@@ -125,7 +114,7 @@
             overflow: hidden;
         }
 
-        /* SVG-Wrapper: Garantiert sauberes Skalieren ohne Flexbox-Überlauf */
+        /* SVG-Wrapper: nimmt verfügbare Höhe und skaliert 1:1 */
         .wr-svg-wrap {
             display: flex;
             align-items: center;
@@ -135,50 +124,51 @@
             min-width: 0;
             width: 100%;
             height: 100%;
-            max-height: 100%;
             overflow: hidden;
             position: relative;
         }
 
         .wr-svg {
+            height: 100%;
             width: auto;
-            height: auto;
             max-width: 100%;
             max-height: 100%;
             aspect-ratio: 1 / 1;
-            object-fit: contain;
             display: block;
+            margin: 0 auto;
         }
 
         /* Nadelrotation: butterweiche 60fps CSS Transitions */
         .needle-transition {
             transition: transform 0.8s cubic-bezier(0.34, 1.3, 0.64, 1);
             transform-origin: 60px 60px;
+            transform-box: view-box;
         }
 
         .ghost-needle-transition {
             transition: transform 1.2s ease-out;
             transform-origin: 60px 60px;
+            transform-box: view-box;
             opacity: 0.35;
         }
 
         /* Himmelsrichtung Badge unter dem Kompass */
         .wr-cardinal-badge {
             flex-shrink: 0;
-            font-size: clamp(10.5px, min(3.5cqw, 3.8cqh), 15px);
+            font-size: 11.5px;
             font-weight: 700;
             color: var(--text-primary);
             text-align: center;
             letter-spacing: 0.3px;
             line-height: 1.1;
-            margin-top: 3px;
+            margin-top: 2px;
             white-space: nowrap;
         }
 
         .wr-cardinal-sub {
             font-weight: 400;
             color: var(--text-secondary);
-            font-size: 0.88em;
+            font-size: 0.9em;
             margin-left: 2px;
         }
 
@@ -188,7 +178,7 @@
             background: var(--divider-color);
             width: 100%;
             flex-shrink: 0;
-            margin: 4px 0 5px 0;
+            margin: 4px 0;
         }
 
         /* Footer mit Temperaturen & Windwerten (bleibt IMMER sichtbar) */
@@ -197,7 +187,7 @@
             flex-direction: column;
             width: 100%;
             flex-shrink: 0;
-            gap: 3px;
+            gap: 2px;
             padding-bottom: 2px;
         }
 
@@ -209,7 +199,7 @@
         }
 
         .wr-temp-val {
-            font-size: clamp(16px, min(5.8cqw, 6.2cqh), 28px);
+            font-size: 19px;
             font-weight: 800;
             color: var(--text-primary);
             letter-spacing: -0.5px;
@@ -217,14 +207,14 @@
         }
 
         .wr-temp-unit {
-            font-size: clamp(10.5px, min(3.5cqw, 3.8cqh), 16px);
+            font-size: 12px;
             font-weight: 600;
             color: var(--text-secondary);
             margin-left: 1px;
         }
 
         .wr-temp-tag {
-            font-size: clamp(8.5px, min(2.5cqw, 2.8cqh), 11px);
+            font-size: 9px;
             font-weight: 600;
             color: var(--text-secondary);
             text-transform: uppercase;
@@ -233,7 +223,7 @@
         }
 
         .wr-stall {
-            font-size: clamp(10px, min(3.2cqw, 3.5cqh), 14px);
+            font-size: 11.5px;
             color: var(--text-muted);
             font-weight: 500;
             white-space: nowrap;
@@ -249,20 +239,20 @@
             align-items: baseline;
             justify-content: space-between;
             width: 100%;
-            font-size: clamp(9.5px, min(3.2cqw, 3.5cqh), 14px);
-            line-height: 1.2;
-            white-space: nowrap;
+            font-size: 11.5px;
+            color: var(--text-secondary);
         }
 
-        .wr-wind {
-            font-weight: 700;
+        .wr-speed {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 2px;
+            font-weight: 600;
+        }
+
+        .wr-speed-main {
             color: #38BDF8;
-        }
-
-        .wr-wind-secondary {
-            font-weight: 400;
-            color: var(--text-muted);
-            font-size: 0.86em;
+            font-weight: 700;
         }
 
         .wr-gust {
@@ -279,35 +269,9 @@
         /* ---------------------------------------------------- */
         /* Vollbild-Modus & Vergrößerte Kachelansicht          */
         /* ---------------------------------------------------- */
-        @container (min-height: 380px) and (min-width: 320px) {
+        @media (min-height: 380px) and (min-width: 320px) {
             .wr-container {
-                padding: 18px 26px;
-            }
-            .wr-divider {
-                margin: 10px 0 12px 0;
-            }
-            .wr-footer {
-                gap: 8px;
-                padding-bottom: 8px;
-            }
-            .wr-temp-val {
-                font-size: clamp(28px, 6cqw, 42px);
-            }
-            .wr-temp-unit {
-                font-size: 20px;
-            }
-            .wr-temp-tag {
-                font-size: 13px;
-            }
-            .wr-stall {
-                font-size: 16px;
-            }
-            .wr-row2 {
-                font-size: 16.5px;
-            }
-            .wr-cardinal-badge {
-                font-size: 20px;
-                margin-top: 8px;
+                padding: 18px 24px;
             }
             .wr-top-bar {
                 font-size: 13px;
@@ -317,12 +281,38 @@
                 padding: 3px 10px;
                 font-size: 12.5px;
             }
+            .wr-cardinal-badge {
+                font-size: 18px;
+                margin-top: 8px;
+            }
+            .wr-divider {
+                margin: 10px 0 12px 0;
+            }
+            .wr-footer {
+                gap: 8px;
+                padding-bottom: 8px;
+            }
+            .wr-temp-val {
+                font-size: 36px;
+            }
+            .wr-temp-unit {
+                font-size: 18px;
+            }
+            .wr-temp-tag {
+                font-size: 12px;
+            }
+            .wr-stall {
+                font-size: 16px;
+            }
+            .wr-row2 {
+                font-size: 16px;
+            }
         }
 
         /* ---------------------------------------------------- */
-        /* Breites Kachel-Layout (2 Spalten: Links Kompass, Rechts Daten) */
+        /* Breites Kachel-Layout (2 Spalten)                   */
         /* ---------------------------------------------------- */
-        @container (aspect-ratio >= 1.45) and (max-height: 360px) {
+        @media (min-width: 420px) and (max-height: 340px) {
             .wr-container {
                 flex-direction: row;
                 align-items: center;
@@ -390,7 +380,7 @@
             </div>
         </div>
 
-        <!-- Mitte: Dynamische SVG Windrose -->
+        <!-- Mitte: Dynamische SVG Windrose mit dunklem Ziffernblatt -->
         <div class="wr-compass-hero">
             <div class="wr-svg-wrap">
                 <svg class="wr-svg" viewBox="0 0 120 120">
@@ -400,36 +390,37 @@
                         </filter>
                     </defs>
 
-                    <!-- Äußere Skalierungsringe -->
-                    <circle cx="60" cy="60" r="54" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.12)" stroke-width="1.2" />
-                    <circle cx="60" cy="60" r="44" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.8" stroke-dasharray="2,3" />
+                    <!-- Solides dunkles Ziffernblatt / Dial Background -->
+                    <circle cx="60" cy="60" r="56" fill="#1F232B" stroke="rgba(255,255,255,0.15)" stroke-width="1.2" />
+                    <circle cx="60" cy="60" r="53" fill="#171A20" stroke="rgba(0,0,0,0.5)" stroke-width="0.8" />
+                    <circle cx="60" cy="60" r="44" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="0.8" stroke-dasharray="2,3" />
 
                     <!-- Haupt-Skalenstriche (N, O, S, W) -->
-                    <line x1="60" y1="8" x2="60" y2="15" stroke="rgba(255,255,255,0.45)" stroke-width="1.5" stroke-linecap="round" />
-                    <line x1="112" y1="60" x2="105" y2="60" stroke="rgba(255,255,255,0.45)" stroke-width="1.5" stroke-linecap="round" />
-                    <line x1="60" y1="112" x2="60" y2="105" stroke="rgba(255,255,255,0.45)" stroke-width="1.5" stroke-linecap="round" />
-                    <line x1="8" y1="60" x2="15" y2="60" stroke="rgba(255,255,255,0.45)" stroke-width="1.5" stroke-linecap="round" />
+                    <line x1="60" y1="8" x2="60" y2="15" stroke="rgba(255,255,255,0.55)" stroke-width="1.5" stroke-linecap="round" />
+                    <line x1="112" y1="60" x2="105" y2="60" stroke="rgba(255,255,255,0.55)" stroke-width="1.5" stroke-linecap="round" />
+                    <line x1="60" y1="112" x2="60" y2="105" stroke="rgba(255,255,255,0.55)" stroke-width="1.5" stroke-linecap="round" />
+                    <line x1="8" y1="60" x2="15" y2="60" stroke="rgba(255,255,255,0.55)" stroke-width="1.5" stroke-linecap="round" />
 
                     <!-- Zwischen-Skalenstriche (NO, SO, SW, NW) -->
-                    <line x1="60" y1="10" x2="60" y2="14" transform="rotate(45 60 60)" stroke="rgba(255,255,255,0.25)" stroke-width="1" stroke-linecap="round" />
-                    <line x1="60" y1="10" x2="60" y2="14" transform="rotate(135 60 60)" stroke="rgba(255,255,255,0.25)" stroke-width="1" stroke-linecap="round" />
-                    <line x1="60" y1="10" x2="60" y2="14" transform="rotate(225 60 60)" stroke="rgba(255,255,255,0.25)" stroke-width="1" stroke-linecap="round" />
-                    <line x1="60" y1="10" x2="60" y2="14" transform="rotate(315 60 60)" stroke="rgba(255,255,255,0.25)" stroke-width="1" stroke-linecap="round" />
+                    <line x1="60" y1="10" x2="60" y2="14" transform="rotate(45 60 60)" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-linecap="round" />
+                    <line x1="60" y1="10" x2="60" y2="14" transform="rotate(135 60 60)" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-linecap="round" />
+                    <line x1="60" y1="10" x2="60" y2="14" transform="rotate(225 60 60)" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-linecap="round" />
+                    <line x1="60" y1="10" x2="60" y2="14" transform="rotate(315 60 60)" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-linecap="round" />
 
                     <!-- Himmelsrichtungs-Buchstaben -->
                     <text x="60" y="24" id="northLetter" fill="#F43F5E" font-size="12" font-weight="800" text-anchor="middle" dominant-baseline="central">N</text>
-                    <text x="96" y="60" fill="rgba(255,255,255,0.85)" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="central">O</text>
-                    <text x="60" y="96" fill="rgba(255,255,255,0.85)" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="central">S</text>
-                    <text x="24" y="60" fill="rgba(255,255,255,0.85)" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="central">W</text>
+                    <text x="96" y="60" fill="#E2E8F0" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="central">O</text>
+                    <text x="60" y="96" fill="#E2E8F0" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="central">S</text>
+                    <text x="24" y="60" fill="#E2E8F0" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="central">W</text>
 
                     <!-- Vorherige Windrichtung: Geisterzeiger (optional) -->
-                    <g id="ghostNeedle" class="ghost-needle-transition" style="display:none;" transform="rotate(0 60 60)">
+                    <g id="ghostNeedle" class="ghost-needle-transition" style="display:none;">
                         <polygon points="60,32 57,60 60,56" fill="rgba(255,255,255,0.3)" />
                         <polygon points="60,32 63,60 60,56" fill="rgba(255,255,255,0.4)" />
                     </g>
 
                     <!-- Haupt-Windnadel mit 60fps Hardware-Transformation -->
-                    <g id="needleGroup" class="needle-transition" filter="url(#wr-shadow)" transform="rotate(0 60 60)">
+                    <g id="needleGroup" class="needle-transition" filter="url(#wr-shadow)">
                         <!-- Pfeilspitze Norden/Windrichtung -->
                         <polygon id="needleFrontLeft" points="60,28 56,60 60,54" fill="#00CDAB" />
                         <polygon id="needleFrontRight" points="60,28 64,60 60,54" fill="#14F1CD" />
@@ -450,242 +441,225 @@
             </div>
         </div>
 
+        <!-- Trennlinie -->
         <div class="wr-divider"></div>
 
-        <!-- Unten: Footer mit Temperaturen und Wind -->
+        <!-- Unten: Footer mit Messwerten -->
         <div class="wr-footer">
-            <!-- Zeile 1: Außentemperatur (WP) & Sekundärsensor (Stall) -->
+            <!-- Reihe 1: Haupt-Außentemperatur links, Sekundärtemperatur rechts -->
             <div class="wr-row1">
                 <div>
-                    <span class="wr-temp-val"><span id="tempOutdoor">--,-</span><span class="wr-temp-unit">°C</span></span>
-                    <span class="wr-temp-tag">Außen</span>
+                    <span class="wr-temp-val" id="tempOutdoor">--,-</span>
+                    <span class="wr-temp-unit">°C</span>
+                    <span class="wr-temp-tag">AUSSEN</span>
                 </div>
-                <div class="wr-stall" id="secondaryContainer">
-                    <span id="secLabel">Stall</span>: <span class="wr-stall-val"><span id="tempSecondary">--,-</span> °C</span>
+                <div class="wr-stall" id="secondaryTempWrap">
+                    <span id="secondaryTempLabel">Stall</span>: <span class="wr-stall-val" id="tempSecondary">--,- °C</span>
                 </div>
             </div>
 
-            <!-- Zeile 2: Windgeschwindigkeit, Böen & Beaufort -->
+            <!-- Reihe 2: Windgeschwindigkeit & Böe links, Beaufort rechts -->
             <div class="wr-row2">
-                <div>
-                    <span class="wr-wind"><span id="speedVal">0,0</span> <span id="speedUnit">km/h</span> <span class="wr-wind-secondary" id="speedSecondary">(0,0 m/s)</span></span>
-                    <span class="wr-gust" id="gustContainer"></span>
+                <div class="wr-speed">
+                    <span class="wr-speed-main" id="speedVal">0,0 km/h</span>
+                    <span id="gustWrap" style="display:none;">
+                        <span class="wr-gust" id="gustVal">Böe 0,0</span>
+                    </span>
                 </div>
-                <div class="wr-bft" id="bftContainer">
-                    <span id="bftVal">0</span> Bft (<span id="bftName">Windstille</span>)
-                </div>
+                <div class="wr-bft" id="bftVal">0 Bft (Windstille)</div>
             </div>
         </div>
 
     </div>
 
+    <!-- IP-Symcon HTML-SDK JavaScript Logik -->
     <script>
-        // Interner Rotationsspeicher für "kürzesten Weg" (unwrapping)
-        let currentNeedleRotation = 0;
-        let currentGhostRotation = 0;
+        /* INITIAL DATA FROM PHP */
+
+        // Zustand für kontinuierliche Drehung (verhindert 350° Rückdreher)
+        let currentVisualAngle = 0;
+        let currentGhostVisualAngle = 0;
 
         /**
-         * Verhindert 350-Grad-Überschläge bei Richtungswechsel über 0°/360° hinaus
+         * Berechnet den kürzesten Rotationspfad über 360°-Grenzen hinweg.
          */
-        function calculateContinuousAngle(newDeg, currentAngle) {
-            const normalizedNew = ((newDeg % 360) + 360) % 360;
-            const currentMod = ((currentAngle % 360) + 360) % 360;
-            let diff = normalizedNew - currentMod;
+        function calculateContinuousRotation(targetAngle, currentAngle) {
+            targetAngle = ((targetAngle % 360) + 360) % 360;
+            let currentNormalized = ((currentAngle % 360) + 360) % 360;
+            let diff = targetAngle - currentNormalized;
 
             if (diff > 180) {
                 diff -= 360;
             } else if (diff < -180) {
                 diff += 360;
             }
-
             return currentAngle + diff;
         }
 
         /**
-         * Schaltet die Top-Bar nur ein, wenn mindestens eine Pille aktiv ist
-         */
-        function checkTopBar() {
-            const topBar = document.getElementById('topBar');
-            const rainPill = document.getElementById('rainPill');
-            const batPill = document.getElementById('batteryPill');
-            const hasVisiblePill = (!rainPill.classList.contains('hidden')) || (!batPill.classList.contains('hidden'));
-            if (hasVisiblePill) {
-                topBar.classList.remove('empty');
-            } else {
-                topBar.classList.add('empty');
-            }
-        }
-
-        /**
-         * IP-Symcon 7.1+ HTML-SDK Empfängerfunktion
-         * Wird bei UpdateVisualizationValue(...) aus dem PHP-Modul aufgerufen.
-         * Garantiert flackerfreie, sofortige DOM-Aktualisierung!
+         * IP-Symcon HTML-SDK Callback für dynamische Updates.
          */
         function handleMessage(data) {
             if (!data) return;
 
-            let d = data;
-            if (typeof data === 'string') {
-                try {
-                    d = JSON.parse(data);
-                } catch (e) {
-                    console.error('Fehler beim Parsen der Wetter-Daten:', e);
-                    return;
+            // 1. Farben & Optionen aktualisieren (falls im Datensatz)
+            if (data.colors) {
+                if (data.colors.needle) {
+                    const elLeft = document.getElementById('needleFrontLeft');
+                    const elRing = document.getElementById('needleCenterRing');
+                    if (elLeft) elLeft.setAttribute('fill', data.colors.needle);
+                    if (elRing) elRing.setAttribute('stroke', data.colors.needle);
+                }
+                if (data.colors.needleBright) {
+                    const elRight = document.getElementById('needleFrontRight');
+                    if (elRight) elRight.setAttribute('fill', data.colors.needleBright);
+                }
+                if (data.colors.north) {
+                    const elNorth = document.getElementById('northLetter');
+                    if (elNorth) elNorth.setAttribute('fill', data.colors.north);
+                }
+                if (data.colors.gust) {
+                    const elGust = document.getElementById('gustVal');
+                    if (elGust) elGust.style.color = data.colors.gust;
                 }
             }
 
-            const root = document.documentElement;
-
-            // 1. Farbanpassungen dynamisch übernehmen
-            if (d.needleColor) {
-                root.style.setProperty('--needle-color', d.needleColor);
-                const frontLeft = document.getElementById('needleFrontLeft');
-                const centerRing = document.getElementById('needleCenterRing');
-                if (frontLeft) frontLeft.setAttribute('fill', d.needleColor);
-                if (centerRing) centerRing.setAttribute('stroke', d.needleColor);
-            }
-            if (d.northColor) {
-                root.style.setProperty('--north-color', d.northColor);
-                const northEl = document.getElementById('northLetter');
-                if (northEl) northEl.setAttribute('fill', d.northColor);
-            }
-            if (d.gustColor) {
-                root.style.setProperty('--gust-color', d.gustColor);
-            }
-
-            // 2. Windnadel flüssig drehen (ohne Ruckeln und ohne DOM-Neubau)
-            if (d.degrees !== undefined && d.degrees !== null) {
-                currentNeedleRotation = calculateContinuousAngle(d.degrees, currentNeedleRotation);
-                const needleGroup = document.getElementById('needleGroup');
-                if (needleGroup) {
-                    needleGroup.style.transform = `rotate(${currentNeedleRotation}deg)`;
+            // 2. Windrichtung & kontinuierliche Nadel-Rotation
+            if (typeof data.windDirection === 'number') {
+                currentVisualAngle = calculateContinuousRotation(data.windDirection, currentVisualAngle);
+                const needle = document.getElementById('needleGroup');
+                if (needle) {
+                    needle.style.transform = `rotate(${currentVisualAngle}deg)`;
                 }
             }
 
-            // 3. Vorherige Windrichtung (Geisterzeiger)
+            // Vorherige Windrichtung (Geisterzeiger)
             const ghostNeedle = document.getElementById('ghostNeedle');
             if (ghostNeedle) {
-                if (d.showPreviousDirection && d.prevDegrees !== null && d.prevDegrees !== undefined) {
-                    currentGhostRotation = calculateContinuousAngle(d.prevDegrees, currentGhostRotation);
+                if (typeof data.prevDirection === 'number' && data.options?.showPreviousDirection) {
                     ghostNeedle.style.display = 'block';
-                    ghostNeedle.style.transform = `rotate(${currentGhostRotation}deg)`;
+                    currentGhostVisualAngle = calculateContinuousRotation(data.prevDirection, currentGhostVisualAngle);
+                    ghostNeedle.style.transform = `rotate(${currentGhostVisualAngle}deg)`;
                 } else {
                     ghostNeedle.style.display = 'none';
                 }
             }
 
-            // 4. Himmelsrichtungstext
-            if (d.cardinalShort !== undefined) {
-                document.getElementById('shortDir').textContent = d.cardinalShort;
+            // Himmelsrichtungs-Text
+            const shortDirEl = document.getElementById('shortDir');
+            const cardinalSubEl = document.getElementById('cardinalSub');
+            if (shortDirEl && data.cardinal) {
+                shortDirEl.textContent = data.cardinal;
             }
-            if (d.cardinalLong !== undefined && d.degrees !== undefined) {
-                document.getElementById('cardinalSub').textContent = `(${Math.round(d.degrees)}°) · ${d.cardinalLong}`;
+            if (cardinalSubEl) {
+                const deg = typeof data.windDirection === 'number' ? Math.round(data.windDirection) : 0;
+                const text = data.cardinalText || '';
+                cardinalSubEl.textContent = `(${deg}°) · ${text}`;
             }
 
-            // 5. Temperaturen
-            if (d.outdoorTemp !== undefined) {
-                document.getElementById('tempOutdoor').textContent = d.outdoorTemp;
+            // 3. Außentemperatur & Sekundärtemperatur (Stall/Wärmepumpe)
+            const tempOutdoorEl = document.getElementById('tempOutdoor');
+            if (tempOutdoorEl && data.outdoorTempFormatted !== undefined) {
+                tempOutdoorEl.textContent = data.outdoorTempFormatted;
             }
-            const secContainer = document.getElementById('secondaryContainer');
-            if (secContainer) {
-                if (d.showSecondaryTemp && d.secondaryTemp !== undefined) {
-                    secContainer.style.display = 'block';
-                    document.getElementById('tempSecondary').textContent = d.secondaryTemp;
-                    if (d.secondaryTempLabel) {
-                        document.getElementById('secLabel').textContent = d.secondaryTempLabel;
-                    }
+
+            const secTempWrap = document.getElementById('secondaryTempWrap');
+            const tempSecondaryEl = document.getElementById('tempSecondary');
+            const secLabelEl = document.getElementById('secondaryTempLabel');
+
+            if (secTempWrap) {
+                if (data.options?.showSecondaryTemp && data.secondaryTempFormatted !== undefined) {
+                    secTempWrap.style.display = 'inline-block';
+                    if (tempSecondaryEl) tempSecondaryEl.textContent = `${data.secondaryTempFormatted} °C`;
+                    if (secLabelEl && data.secondaryTempLabel) secLabelEl.textContent = data.secondaryTempLabel;
                 } else {
-                    secContainer.style.display = 'none';
+                    secTempWrap.style.display = 'none';
                 }
             }
 
-            // 6. Windgeschwindigkeit & Einheit
-            const unit = d.windUnit || 'kmh';
+            // 4. Windgeschwindigkeit, Böe & Beaufort
             const speedValEl = document.getElementById('speedVal');
-            const speedUnitEl = document.getElementById('speedUnit');
-            const speedSecEl = document.getElementById('speedSecondary');
-
-            if (unit === 'ms') {
-                speedValEl.textContent = d.speedMS || '0,0';
-                speedUnitEl.textContent = 'm/s';
-                speedSecEl.textContent = `(${d.speedKMH || '0,0'} km/h)`;
-            } else if (unit === 'kn') {
-                speedValEl.textContent = d.speedKN || '0,0';
-                speedUnitEl.textContent = 'kn';
-                speedSecEl.textContent = `(${d.speedKMH || '0,0'} km/h)`;
-            } else {
-                speedValEl.textContent = d.speedKMH || '0,0';
-                speedUnitEl.textContent = 'km/h';
-                speedSecEl.textContent = `(${d.speedMS || '0,0'} m/s)`;
+            if (speedValEl && data.windSpeedFormatted !== undefined) {
+                const unit = data.windSpeedUnit || 'km/h';
+                speedValEl.textContent = `${data.windSpeedFormatted} ${unit}`;
             }
 
-            // 7. Böenanzeige
-            const gustCont = document.getElementById('gustContainer');
-            if (gustCont) {
-                if (d.gustActive && d.gustKMH) {
-                    const gustVal = (unit === 'ms') ? (d.gustMS + ' m/s') : (d.gustKMH + ' km/h');
-                    gustCont.textContent = ` · Böen: ${gustVal}`;
-                    gustCont.style.display = 'inline';
+            const gustWrap = document.getElementById('gustWrap');
+            const gustValEl = document.getElementById('gustVal');
+            if (gustWrap && gustValEl) {
+                if (data.gustFormatted && (data.gust > (data.windSpeed || 0))) {
+                    gustWrap.style.display = 'inline';
+                    const unit = data.gustUnit || 'km/h';
+                    gustValEl.textContent = `Böe ${data.gustFormatted} ${unit}`;
                 } else {
-                    gustCont.textContent = '';
-                    gustCont.style.display = 'none';
+                    gustWrap.style.display = 'none';
                 }
             }
 
-            // 8. Beaufort-Skala
-            const bftCont = document.getElementById('bftContainer');
-            if (bftCont) {
-                if (d.showBeaufort && d.beaufort !== undefined) {
-                    bftCont.style.display = 'block';
-                    document.getElementById('bftVal').textContent = d.beaufort;
-                    document.getElementById('bftName').textContent = d.beaufortName || '';
+            const bftValEl = document.getElementById('bftVal');
+            if (bftValEl) {
+                if (data.options?.showBeaufort && data.bft !== undefined) {
+                    bftValEl.style.display = 'block';
+                    bftValEl.textContent = `${data.bft} Bft (${data.bftText || ''})`;
                 } else {
-                    bftCont.style.display = 'none';
+                    bftValEl.style.display = 'none';
                 }
             }
 
-            // 9. Regen-Status Pill
+            // 5. Status-Pills (Regen & Batterie)
+            const topBar = document.getElementById('topBar');
             const rainPill = document.getElementById('rainPill');
+            const rainIcon = document.getElementById('rainIcon');
+            const rainText = document.getElementById('rainText');
+            const batteryPill = document.getElementById('batteryPill');
+            const batteryIcon = document.getElementById('batteryIcon');
+            const batteryText = document.getElementById('batteryText');
+
+            let hasPill = false;
+
             if (rainPill) {
-                if (d.showRainStatus && d.rainStatus !== null) {
-                    if (d.rainStatus === 'rain') {
-                        rainPill.classList.remove('hidden');
+                if (data.options?.showRainStatus && data.rain !== undefined) {
+                    rainPill.classList.remove('hidden');
+                    if (data.rain) {
                         rainPill.classList.add('rain');
-                        document.getElementById('rainIcon').textContent = '🌧️';
-                        document.getElementById('rainText').textContent = 'Regen';
+                        if (rainIcon) rainIcon.textContent = '🌧️';
+                        if (rainText) rainText.textContent = data.rainText || 'Regen';
                     } else {
                         rainPill.classList.remove('rain');
-                        rainPill.classList.add('hidden');
+                        if (rainIcon) rainIcon.textContent = '☀️';
+                        if (rainText) rainText.textContent = data.rainText || 'Trocken';
                     }
+                    hasPill = true;
                 } else {
                     rainPill.classList.add('hidden');
                 }
             }
 
-            // 10. Batterie-Status Pill
-            const batPill = document.getElementById('batteryPill');
-            if (batPill) {
-                if (d.showBatteryStatus && d.batteryOk !== undefined) {
-                    if (!d.batteryOk) {
-                        batPill.classList.remove('hidden');
-                        batPill.classList.add('battery-warn');
-                        document.getElementById('batteryIcon').textContent = '⚠️';
-                        document.getElementById('batteryText').textContent = 'Batterie schwach';
+            if (batteryPill) {
+                if (data.options?.showBatteryStatus && data.battery !== undefined) {
+                    batteryPill.classList.remove('hidden');
+                    if (data.battery) {
+                        batteryPill.classList.remove('battery-warn');
+                        if (batteryIcon) batteryIcon.textContent = '🔋';
+                        if (batteryText) batteryText.textContent = 'Batterie OK';
                     } else {
-                        batPill.classList.add('hidden');
+                        batteryPill.classList.add('battery-warn');
+                        if (batteryIcon) batteryIcon.textContent = '🪫';
+                        if (batteryText) batteryText.textContent = 'Batterie schwach';
                     }
+                    hasPill = true;
                 } else {
-                    batPill.classList.add('hidden');
+                    batteryPill.classList.add('hidden');
                 }
             }
 
-            // Top-Bar Sichtbarkeit aktualisieren
-            checkTopBar();
-        }
-
-        // Initialdaten verarbeiten falls vorhanden
-        if (window.__INITIAL_DATA__) {
-            handleMessage(window.__INITIAL_DATA__);
+            if (topBar) {
+                if (hasPill) {
+                    topBar.classList.remove('empty');
+                } else {
+                    topBar.classList.add('empty');
+                }
+            }
         }
     </script>
 </body>
