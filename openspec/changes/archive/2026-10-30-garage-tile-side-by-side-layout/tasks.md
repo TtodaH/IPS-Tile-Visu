@@ -12,4 +12,4 @@
 ## 3. Visual Verification & Deployment
 
 - [x] 3.1 Test rendering in mobile viewports (e.g. 360x150, 320x140) using headless Chrome screenshots
-- [ ] 3.2 Commit changes, push to Gitea and GitHub, pull to `unserver`, and reload module in IP-Symcon
+- [x] 3.2 Commit changes, push to Gitea and GitHub, pull to `unserver`, and reload module in IP-Symcon

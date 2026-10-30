@@ -1,4 +1,7 @@
-## ADDED Requirements
+## Purpose
+Provide hardware abstraction, impulse control, travel time estimation, and sensor integration for garage doors in IP-Symcon 7+.
+
+## Requirements
 
 ### Requirement: Automated Shelly 1 Impulse Generation
 The system SHALL simulate a momentary push-button impulse on the Shelly 1 relay switch variable without requiring manual toggling.
