@@ -41,6 +41,7 @@ class GarageDoorTile extends IPSModule
         $this->RegisterPropertyInteger('ImpulseDurationMs', 400);  // 400 ms Taster-Haltezeit (Shelly 1)
         $this->RegisterPropertyInteger('TravelTimeOpenSec', 16);   // 16s Fahrzeit Öffnen
         $this->RegisterPropertyInteger('TravelTimeCloseSec', 16);  // 16s Fahrzeit Schließen
+        $this->RegisterPropertyBoolean('AutoCalibrateTravelTime', true); // Automatische Kalibrierung am Endlagensensor
         $this->RegisterPropertyInteger('WarnOpenMinutes', 30);     // Warnung ab 30 Min. offen
 
         // Presets & Positionen
@@ -70,6 +71,8 @@ class GarageDoorTile extends IPSModule
         $this->RegisterAttributeInteger('LastDirection', 1); // 1 = nach oben, -1 = nach unten
         $this->RegisterAttributeFloat('TargetPosition', -1.0); // -1 = kein aktives Zielfahren
         $this->RegisterAttributeFloat('LastImpulseOffTime', 0.0);
+        $this->RegisterAttributeFloat('MeasuredCloseTimeSec', 0.0);
+        $this->RegisterAttributeBoolean('IsFullCloseRun', false);
     }
 
     public function Destroy(): void
@@ -109,6 +112,13 @@ class GarageDoorTile extends IPSModule
             IPS_SetVariableProfileAssociation('GARDOOR.State', self::STATE_STOPPED, $this->Translate('Gestoppt'), 'Hourglass', 0x94A3B8);
         }
 
+        if (!IPS_VariableProfileExists('GARDOOR.TravelTime')) {
+            IPS_CreateVariableProfile('GARDOOR.TravelTime', 2); // Float
+            IPS_SetVariableProfileIcon('GARDOOR.TravelTime', 'Clock');
+            IPS_SetVariableProfileText('GARDOOR.TravelTime', '', ' s');
+            IPS_SetVariableProfileDigits('GARDOOR.TravelTime', 1);
+        }
+
         // 4. Native Child-Statusvariablen pflegen (für Detail-/Vollbildansicht)
         $this->MaintainVariable('State', $this->Translate('Torzustand'), 1, 'GARDOOR.State', 1, true);
         $this->MaintainVariable('Position', $this->Translate('Position'), 2, '~ShutterMoveStep', 2, true);
@@ -118,6 +128,13 @@ class GarageDoorTile extends IPSModule
         // Child-Variable für Lüftungsstellung (in der Detailansicht einstellbar)
         $this->MaintainVariable('VentilationPosition', $this->Translate('Lüftungsstellung'), 1, '~ShutterMoveStep', 5, true);
         $this->EnableAction('VentilationPosition');
+
+        // Child-Variable für gemessene/kalibrierte Fahrzeit
+        $this->MaintainVariable('CalibratedTravelTime', $this->Translate('Gemessene Fahrzeit'), 2, 'GARDOOR.TravelTime', 6, true);
+        $measuredTime = $this->ReadAttributeFloat('MeasuredCloseTimeSec');
+        if ($measuredTime > 0.0) {
+            $this->SetValue('CalibratedTravelTime', $measuredTime);
+        }
 
         // Wert mit der Instanz-Konfiguration abgleichen
         $configuredVent = $this->ReadPropertyInteger('DefaultVentilationPosition');
@@ -298,6 +315,7 @@ class GarageDoorTile extends IPSModule
                 $this->WriteAttributeFloat('MotionStartPosition', 0.0);
                 $this->WriteAttributeInteger('LastDirection', 1);
                 $this->WriteAttributeInteger('OpenedAtTimestamp', time());
+                $this->WriteAttributeBoolean('IsFullCloseRun', false);
                 $this->SetTimerInterval('TravelProgress', 250);
                 $this->SetTimerInterval('OpenDurationTick', 60000);
                 break;
@@ -305,28 +323,32 @@ class GarageDoorTile extends IPSModule
             case self::STATE_OPENING:
                 // Klick während Fahrt nach oben -> Stopp
                 $this->WriteAttributeInteger('DoorState', self::STATE_STOPPED);
+                $this->WriteAttributeBoolean('IsFullCloseRun', false);
                 $this->SetTimerInterval('TravelProgress', 0);
                 $this->WriteAttributeInteger('LastDirection', 1);
                 break;
 
             case self::STATE_OPEN:
-                // Aus dem offenen Zustand startet das Schließen
+                // Aus dem offenen Zustand startet das Schließen (voller Schließlauf für Kalibrierung vorgemerkt)
                 $this->WriteAttributeInteger('DoorState', self::STATE_CLOSING);
                 $this->WriteAttributeFloat('MotionStartTime', $now);
                 $this->WriteAttributeFloat('MotionStartPosition', $currentPos > 0 ? $currentPos : 100.0);
                 $this->WriteAttributeInteger('LastDirection', -1);
+                $this->WriteAttributeBoolean('IsFullCloseRun', ($currentPos >= 98.0));
                 $this->SetTimerInterval('TravelProgress', 250);
                 break;
 
             case self::STATE_CLOSING:
                 // Klick während Fahrt nach unten -> Stopp
                 $this->WriteAttributeInteger('DoorState', self::STATE_STOPPED);
+                $this->WriteAttributeBoolean('IsFullCloseRun', false);
                 $this->SetTimerInterval('TravelProgress', 0);
                 $this->WriteAttributeInteger('LastDirection', -1);
                 break;
 
             case self::STATE_STOPPED:
                 // Klick im Stillstand -> Fahrt in die Gegenrichtung
+                $this->WriteAttributeBoolean('IsFullCloseRun', false);
                 $newDir = ($lastDir === 1) ? -1 : 1;
                 $newState = ($newDir === 1) ? self::STATE_OPENING : self::STATE_CLOSING;
                 $this->WriteAttributeInteger('DoorState', $newState);
@@ -383,8 +405,8 @@ class GarageDoorTile extends IPSModule
             return;
         }
 
-        $openTime  = max(2.0, (float)$this->ReadPropertyInteger('TravelTimeOpenSec'));
-        $closeTime = max(2.0, (float)$this->ReadPropertyInteger('TravelTimeCloseSec'));
+        $openTime  = $this->GetEffectiveTravelTimeOpen();
+        $closeTime = $this->GetEffectiveTravelTimeClose();
         $impulseMs = max(200, $this->ReadPropertyInteger('ImpulseDurationMs'));
         // Mindestlaufzeit: Impulsdauer + 1000ms Pause (für zuverlässige Erkennung des 2. Impulses durch die Torsteuerung)
         $minStopDelayMs = (int)($impulseMs + 1000);
@@ -405,6 +427,7 @@ class GarageDoorTile extends IPSModule
             $this->WriteAttributeInteger('LastDirection', 1);
             $this->WriteAttributeInteger('OpenedAtTimestamp', time());
             $this->WriteAttributeFloat('TargetPosition', $targetPos);
+            $this->WriteAttributeBoolean('IsFullCloseRun', false);
 
             $this->SetTimerInterval('TargetStop', max($minStopDelayMs, $durationMs));
             $this->SetTimerInterval('TravelProgress', 250);
@@ -423,6 +446,7 @@ class GarageDoorTile extends IPSModule
             $this->WriteAttributeFloat('MotionStartPosition', 100.0);
             $this->WriteAttributeInteger('LastDirection', -1);
             $this->WriteAttributeFloat('TargetPosition', $targetPos);
+            $this->WriteAttributeBoolean('IsFullCloseRun', ($targetPos <= 2.0));
 
             $this->SetTimerInterval('TargetStop', max($minStopDelayMs, $durationMs));
             $this->SetTimerInterval('TravelProgress', 250);
@@ -451,6 +475,7 @@ class GarageDoorTile extends IPSModule
             $this->WriteAttributeFloat('MotionStartPosition', $currentPos);
             $this->WriteAttributeInteger('LastDirection', $dir);
             $this->WriteAttributeFloat('TargetPosition', $targetPos);
+            $this->WriteAttributeBoolean('IsFullCloseRun', false);
 
             $this->SetTimerInterval('TargetStop', max($minStopDelayMs, $durationMs));
             $this->SetTimerInterval('TravelProgress', 250);
@@ -535,6 +560,28 @@ class GarageDoorTile extends IPSModule
     }
 
     /**
+     * Liefert die effektive Schließzeit (unter Berücksichtigung der automatischen Kalibrierung)
+     */
+    public function GetEffectiveTravelTimeClose(): float
+    {
+        if ($this->ReadPropertyBoolean('AutoCalibrateTravelTime')) {
+            $measured = $this->ReadAttributeFloat('MeasuredCloseTimeSec');
+            if ($measured >= 5.0 && $measured <= 90.0) {
+                return $measured;
+            }
+        }
+        return max(2.0, (float)$this->ReadPropertyInteger('TravelTimeCloseSec'));
+    }
+
+    /**
+     * Liefert die effektive Öffnungszeit
+     */
+    public function GetEffectiveTravelTimeOpen(): float
+    {
+        return max(2.0, (float)$this->ReadPropertyInteger('TravelTimeOpenSec'));
+    }
+
+    /**
      * Taktet die Fahrzeit-Schätzung (alle 250 ms bei Bewegung)
      */
     public function HandleTravelProgress(): void
@@ -545,7 +592,7 @@ class GarageDoorTile extends IPSModule
         $elapsed   = microtime(true) - $startTime;
 
         if ($state === self::STATE_OPENING) {
-            $travelTime = max(2.0, (float)$this->ReadPropertyInteger('TravelTimeOpenSec'));
+            $travelTime = $this->GetEffectiveTravelTimeOpen();
             $delta = ($elapsed / $travelTime) * (100.0 - $startPos);
             $newPos = min(100.0, $startPos + $delta);
             $this->WriteAttributeFloat('CurrentPosition', $newPos);
@@ -556,7 +603,7 @@ class GarageDoorTile extends IPSModule
                 $this->SetTimerInterval('TravelProgress', 0);
             }
         } elseif ($state === self::STATE_CLOSING) {
-            $travelTime = max(2.0, (float)$this->ReadPropertyInteger('TravelTimeCloseSec'));
+            $travelTime = $this->GetEffectiveTravelTimeClose();
             $delta = ($elapsed / $travelTime) * $startPos;
             $newPos = max(0.0, $startPos - $delta);
             $this->WriteAttributeFloat('CurrentPosition', $newPos);
@@ -564,11 +611,14 @@ class GarageDoorTile extends IPSModule
             if ($newPos <= 0.0) {
                 // Rechnerisch geschlossen (wird vom Endlagensensor final bestätigt)
                 $sensorID = $this->ReadPropertyInteger('SensorClosedVariable');
-                if ($sensorID <= 0 || !@IPS_VariableExists($sensorID) || $this->IsSensorClosed()) {
+                if ($sensorID <= 0 || !@IPS_VariableExists($sensorID)) {
                     $this->WriteAttributeInteger('DoorState', self::STATE_CLOSED);
                     $this->WriteAttributeInteger('OpenedAtTimestamp', 0);
                     $this->SetTimerInterval('TravelProgress', 0);
                     $this->SetTimerInterval('OpenDurationTick', 0);
+                } elseif ($this->IsSensorClosed()) {
+                    $this->SyncWithSensors();
+                    return;
                 }
             }
         } else {
@@ -644,6 +694,30 @@ class GarageDoorTile extends IPSModule
 
         if ($isClosed) {
             // Tor ist physisch definitiv geschlossen
+            $prevState   = $this->ReadAttributeInteger('DoorState');
+            $startTime   = $this->ReadAttributeFloat('MotionStartTime');
+            $isFullClose = $this->ReadAttributeBoolean('IsFullCloseRun');
+
+            // Automatische Fahrzeit-Messung bei vollem Schließzyklus
+            if ($isFullClose && $prevState === self::STATE_CLOSING && $startTime > 0.0) {
+                $elapsed = microtime(true) - $startTime;
+                if ($elapsed >= 5.0 && $elapsed <= 90.0) {
+                    $roundedElapsed = round($elapsed, 1);
+                    $this->WriteAttributeFloat('MeasuredCloseTimeSec', $roundedElapsed);
+                    $this->SetValue('CalibratedTravelTime', $roundedElapsed);
+                    $this->SendDebug('TravelTimeCalibration', "Voller Schließzyklus gemessen: {$roundedElapsed} s", 0);
+
+                    if ($this->ReadPropertyBoolean('AutoCalibrateTravelTime')) {
+                        $intSec = (int)round($roundedElapsed);
+                        if ($this->ReadPropertyInteger('TravelTimeCloseSec') !== $intSec) {
+                            @IPS_SetProperty($this->InstanceID, 'TravelTimeCloseSec', $intSec);
+                            $this->SendDebug('TravelTimeCalibration', "TravelTimeCloseSec automatisch kalibriert auf: {$intSec} s", 0);
+                        }
+                    }
+                }
+            }
+
+            $this->WriteAttributeBoolean('IsFullCloseRun', false);
             $this->SetTimerInterval('TargetStop', 0);
             $this->WriteAttributeFloat('TargetPosition', -1.0);
             $this->WriteAttributeInteger('DoorState', self::STATE_CLOSED);
@@ -769,6 +843,8 @@ class GarageDoorTile extends IPSModule
             'isWarning'            => $isWarn,
             'isOnline'             => $isOnline,
             'impulseActive'        => $impulseActive,
+            'measuredCloseTime'    => $this->ReadAttributeFloat('MeasuredCloseTimeSec'),
+            'isCalibrated'         => ($this->ReadAttributeFloat('MeasuredCloseTimeSec') > 0.0),
             'title'                => (string)$this->ReadPropertyString('TileTitle'),
             'presets'              => [
                 'ventilation' => [

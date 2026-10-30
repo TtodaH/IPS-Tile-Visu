@@ -59,6 +59,11 @@
                     "suffix": "s"
                 },
                 {
+                    "type": "CheckBox",
+                    "name": "AutoCalibrateTravelTime",
+                    "caption": "Fahrzeit automatisch kalibrieren (bei voller Schließfahrt)"
+                },
+                {
                     "type": "NumberSpinner",
                     "name": "WarnOpenMinutes",
                     "caption": "Warnung ab Öffnungsdauer (0 = Deaktiviert)",
