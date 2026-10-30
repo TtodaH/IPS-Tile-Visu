@@ -97,14 +97,6 @@ class GarageDoorTile extends IPSModule
         $sensorID = $this->ReadPropertyInteger('SensorClosedVariable');
         $reachID  = $this->ReadPropertyInteger('ReachableVariable');
 
-        $vars = [$switchID, $sensorID, $reachID];
-        foreach ($vars as $vID) {
-            if ($vID > 0 && @IPS_VariableExists($vID)) {
-                $this->RegisterReference($vID);
-                $this->RegisterMessage($vID, VM_UPDATE);
-            }
-        }
-
         // 3. Eigene Profile anlegen
         if (!IPS_VariableProfileExists('GARDOOR.State')) {
             IPS_CreateVariableProfile('GARDOOR.State', 1); // Integer
@@ -126,10 +118,23 @@ class GarageDoorTile extends IPSModule
         $this->MaintainVariable('VentilationPosition', $this->Translate('Lüftungsstellung'), 1, '~ShutterMoveStep', 5, true);
         $this->EnableAction('VentilationPosition');
 
+        // Wert mit der Instanz-Konfiguration abgleichen
+        $configuredVent = $this->ReadPropertyInteger('DefaultVentilationPosition');
+        if ($configuredVent >= 0 && $configuredVent <= 100) {
+            $this->SetValue('VentilationPosition', $configuredVent);
+        }
+
+        // Variablen für Aktualisierungsnachrichten registrieren
         $ventVarID = @$this->GetIDForIdent('VentilationPosition');
-        if ($ventVarID > 0 && GetValueInteger($ventVarID) === 0) {
-            $defaultVent = max(5, $this->ReadPropertyInteger('DefaultVentilationPosition'));
-            $this->SetValue('VentilationPosition', $defaultVent);
+        $vars = [$switchID, $sensorID, $reachID];
+        if ($ventVarID > 0) {
+            $vars[] = $ventVarID;
+        }
+        foreach ($vars as $vID) {
+            if ($vID > 0 && @IPS_VariableExists($vID)) {
+                $this->RegisterReference($vID);
+                $this->RegisterMessage($vID, VM_UPDATE);
+            }
         }
 
         // 5. Initialen Zustand anhand des echten Endlagensensors abgleichen
@@ -151,8 +156,39 @@ class GarageDoorTile extends IPSModule
 
         $html = file_get_contents($htmlFile);
 
+        $payload = $this->GetTilePayload();
+
+        // Frame-0 Vorbefüllung der HTML-Texte (Zero-Delay)
+        $ventLabel    = $payload['presets']['ventilation']['label'] ?? 'Lüften';
+        $customLabel  = $payload['presets']['custom']['label'] ?? 'Preset';
+        $btnText      = $payload['buttonText'] ?? 'Tor bedienen';
+        $stateText    = $payload['stateText'] ?? 'Geschlossen';
+        $posFormatted = $payload['positionFormatted'] ?? '0 %';
+
+        $html = str_replace(
+            [
+                'id="statusText">Geschlossen</span>',
+                'id="btnText">Tor bedienen</span>',
+                'id="posBadge">0 %</div>',
+                'id="presetVentLabel">Lüften 15%</span>',
+                'id="presetCustomLabel">Halb offen 50%</span>'
+            ],
+            [
+                'id="statusText">' . htmlspecialchars($stateText) . '</span>',
+                'id="btnText">' . htmlspecialchars($btnText) . '</span>',
+                'id="posBadge">' . htmlspecialchars($posFormatted) . '</div>',
+                'id="presetVentLabel">' . htmlspecialchars($ventLabel) . '</span>',
+                'id="presetCustomLabel">' . htmlspecialchars($customLabel) . '</span>'
+            ],
+            $html
+        );
+
+        if (($payload['presets']['custom']['enabled'] ?? true) === false) {
+            $html = str_replace('id="presetCustomBtn"', 'id="presetCustomBtn" style="display:none;"', $html);
+        }
+
         // Initiales Datenpaket direkt übergeben
-        $initialData = json_encode($this->GetTilePayload(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $initialData = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $script = '<script>window.__INITIAL_DATA__ = ' . $initialData . '; if (typeof handleMessage === "function") { handleMessage(window.__INITIAL_DATA__); }</script>';
 
         return str_replace('</body>', $script . '</body>', $html);
@@ -183,6 +219,9 @@ class GarageDoorTile extends IPSModule
             case 'VentilationPosition':
                 $val = max(0, min(100, (int)$Value));
                 $this->SetValue('VentilationPosition', $val);
+                if ($this->ReadPropertyInteger('DefaultVentilationPosition') !== $val) {
+                    @IPS_SetProperty($this->InstanceID, 'DefaultVentilationPosition', $val);
+                }
                 $this->SendTileUpdate();
                 break;
 
@@ -431,12 +470,10 @@ class GarageDoorTile extends IPSModule
      */
     public function TriggerPresetVentilation(): void
     {
-        $ventVarID = @$this->GetIDForIdent('VentilationPosition');
-        $ventPos = ($ventVarID > 0) ? GetValueInteger($ventVarID) : $this->ReadPropertyInteger('DefaultVentilationPosition');
-        if ($ventPos <= 0) {
-            $ventPos = 15;
-        }
-        $this->MoveToPosition((float)$ventPos);
+        $ventVarID  = @$this->GetIDForIdent('VentilationPosition');
+        $rawVentPos = ($ventVarID > 0) ? GetValueInteger($ventVarID) : $this->ReadPropertyInteger('DefaultVentilationPosition');
+        $ventPos    = is_numeric($rawVentPos) ? (float)$rawVentPos : 15.0;
+        $this->MoveToPosition($ventPos);
     }
 
     /**
@@ -533,14 +570,15 @@ class GarageDoorTile extends IPSModule
             return;
         }
 
-        $sensorID = $this->ReadPropertyInteger('SensorClosedVariable');
-        $switchID = $this->ReadPropertyInteger('SwitchVariable');
-        $reachID  = $this->ReadPropertyInteger('ReachableVariable');
+        $sensorID  = $this->ReadPropertyInteger('SensorClosedVariable');
+        $switchID  = $this->ReadPropertyInteger('SwitchVariable');
+        $reachID   = $this->ReadPropertyInteger('ReachableVariable');
+        $ventVarID = @$this->GetIDForIdent('VentilationPosition');
 
         if ($SenderID === $sensorID) {
             $this->SyncWithSensors();
             $this->SendTileUpdate();
-        } elseif ($SenderID === $switchID || $SenderID === $reachID) {
+        } elseif ($SenderID === $switchID || $SenderID === $reachID || ($ventVarID > 0 && $SenderID === $ventVarID)) {
             $this->SendTileUpdate();
         }
     }
@@ -668,15 +706,17 @@ class GarageDoorTile extends IPSModule
         }
 
         // Presets & Zielpositionen
-        $ventVarID = @$this->GetIDForIdent('VentilationPosition');
-        $ventPos = ($ventVarID > 0) ? GetValueInteger($ventVarID) : (int)($this->ReadPropertyInteger('DefaultVentilationPosition') ?: 15);
-        if ($ventPos <= 0) {
+        $ventVarID  = @$this->GetIDForIdent('VentilationPosition');
+        $rawVentPos = ($ventVarID > 0) ? GetValueInteger($ventVarID) : $this->ReadPropertyInteger('DefaultVentilationPosition');
+        $ventPos    = is_numeric($rawVentPos) ? (int)$rawVentPos : 15;
+        if ($ventPos < 0 || $ventPos > 100) {
             $ventPos = 15;
         }
 
         $customEnabled = (bool)$this->ReadPropertyBoolean('CustomPresetEnabled');
         $customLabel   = (string)$this->ReadPropertyString('CustomPresetLabel');
-        $customPos     = (int)($this->ReadPropertyInteger('CustomPresetPosition') ?: 50);
+        $rawCustomPos  = $this->ReadPropertyInteger('CustomPresetPosition');
+        $customPos     = is_numeric($rawCustomPos) ? (int)$rawCustomPos : 50;
 
         $rawTarget = $this->ReadAttributeFloat('TargetPosition');
         $targetPos = is_numeric($rawTarget) ? (float)$rawTarget : -1.0;
