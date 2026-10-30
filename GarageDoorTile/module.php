@@ -78,6 +78,14 @@ class GarageDoorTile extends IPSModule
 
     public function ApplyChanges(): void
     {
+        // 0. Fehlende Properties / Timer / Attribute nachregistrieren (falls Modul aktualisiert wurde)
+        $this->RegisterPropertyInteger('DefaultVentilationPosition', 15);
+        $this->RegisterPropertyBoolean('CustomPresetEnabled', true);
+        $this->RegisterPropertyString('CustomPresetLabel', 'Halb offen');
+        $this->RegisterPropertyInteger('CustomPresetPosition', 50);
+        $this->RegisterTimer('TargetStop', 0, 'GARDOOR_HandleTargetStop($_IPS[\'TARGET\']);');
+        $this->RegisterAttributeFloat('TargetPosition', -1.0);
+
         parent::ApplyChanges();
 
         $this->SetVisualizationType(1);
@@ -622,8 +630,11 @@ class GarageDoorTile extends IPSModule
      */
     protected function GetTilePayload(): array
     {
-        $state = $this->ReadAttributeInteger('DoorState');
-        $pos   = round($this->ReadAttributeFloat('CurrentPosition'), 0);
+        $rawState = $this->ReadAttributeInteger('DoorState');
+        $state    = is_numeric($rawState) ? (int)$rawState : self::STATE_CLOSED;
+
+        $rawPos   = $this->ReadAttributeFloat('CurrentPosition');
+        $pos      = is_numeric($rawPos) ? round((float)$rawPos, 0) : 0.0;
 
         $stateInfo = match ($state) {
             self::STATE_CLOSED  => ['key' => 'closed',  'text' => $this->Translate('Geschlossen'),     'color' => '#10B981', 'btn' => $this->Translate('Tor öffnen')],
@@ -634,7 +645,8 @@ class GarageDoorTile extends IPSModule
         };
 
         // Offen-Dauer berechnen
-        $openedAt = $this->ReadAttributeInteger('OpenedAtTimestamp');
+        $rawOpenedAt = $this->ReadAttributeInteger('OpenedAtTimestamp');
+        $openedAt    = is_numeric($rawOpenedAt) ? (int)$rawOpenedAt : 0;
         $openMinutes = 0;
         $openDurationText = '';
         $isWarn = false;
@@ -643,21 +655,21 @@ class GarageDoorTile extends IPSModule
             $openMinutes = max(0, (int)floor((time() - $openedAt) / 60));
             $openDurationText = ($openMinutes === 0) ? $this->Translate('Gerade geöffnet') : sprintf($this->Translate('Seit %d Min.'), $openMinutes);
 
-            $warnThreshold = $this->ReadPropertyInteger('WarnOpenMinutes');
+            $warnThreshold = (int)($this->ReadPropertyInteger('WarnOpenMinutes') ?: 0);
             if ($warnThreshold > 0 && $openMinutes >= $warnThreshold) {
                 $isWarn = true;
             }
         }
 
         // Online-Status des Shelly Aktors
-        $reachID = $this->ReadPropertyInteger('ReachableVariable');
+        $reachID = (int)($this->ReadPropertyInteger('ReachableVariable') ?: 0);
         $isOnline = true;
         if ($reachID > 0 && @IPS_VariableExists($reachID)) {
             $isOnline = GetValueBoolean($reachID);
         }
 
         // Schalterzustand (Impuls aktiv)
-        $switchID = $this->ReadPropertyInteger('SwitchVariable');
+        $switchID = (int)($this->ReadPropertyInteger('SwitchVariable') ?: 0);
         $impulseActive = false;
         if ($switchID > 0 && @IPS_VariableExists($switchID)) {
             $impulseActive = GetValueBoolean($switchID);
@@ -665,15 +677,17 @@ class GarageDoorTile extends IPSModule
 
         // Presets & Zielpositionen
         $ventVarID = @$this->GetIDForIdent('VentilationPosition');
-        $ventPos = ($ventVarID > 0) ? GetValueInteger($ventVarID) : $this->ReadPropertyInteger('DefaultVentilationPosition');
+        $ventPos = ($ventVarID > 0) ? GetValueInteger($ventVarID) : (int)($this->ReadPropertyInteger('DefaultVentilationPosition') ?: 15);
         if ($ventPos <= 0) {
             $ventPos = 15;
         }
 
-        $customEnabled = $this->ReadPropertyBoolean('CustomPresetEnabled');
-        $customLabel   = $this->ReadPropertyString('CustomPresetLabel');
-        $customPos     = $this->ReadPropertyInteger('CustomPresetPosition');
-        $targetPos     = $this->ReadAttributeFloat('TargetPosition');
+        $customEnabled = (bool)$this->ReadPropertyBoolean('CustomPresetEnabled');
+        $customLabel   = (string)$this->ReadPropertyString('CustomPresetLabel');
+        $customPos     = (int)($this->ReadPropertyInteger('CustomPresetPosition') ?: 50);
+
+        $rawTarget = $this->ReadAttributeFloat('TargetPosition');
+        $targetPos = is_numeric($rawTarget) ? (float)$rawTarget : -1.0;
 
         return [
             'state'                => $stateInfo['key'],
@@ -683,13 +697,13 @@ class GarageDoorTile extends IPSModule
             'buttonText'           => $stateInfo['btn'],
             'position'             => (int)$pos,
             'positionFormatted'    => (int)$pos . ' %',
-            'targetPosition'       => $targetPos >= 0.0 ? (int)round($targetPos) : null,
+            'targetPosition'       => ($targetPos >= 0.0) ? (int)round($targetPos) : null,
             'openDurationMinutes'  => $openMinutes,
             'openDurationText'     => $openDurationText,
             'isWarning'            => $isWarn,
             'isOnline'             => $isOnline,
             'impulseActive'        => $impulseActive,
-            'title'                => $this->ReadPropertyString('TileTitle'),
+            'title'                => (string)$this->ReadPropertyString('TileTitle'),
             'presets'              => [
                 'ventilation' => [
                     'position' => $ventPos,
@@ -704,9 +718,9 @@ class GarageDoorTile extends IPSModule
                 ]
             ],
             'options'              => [
-                'showPercentage'     => $this->ReadPropertyBoolean('ShowPercentage'),
-                'showOpenDuration'   => $this->ReadPropertyBoolean('ShowOpenDuration'),
-                'showReachableBadge' => $this->ReadPropertyBoolean('ShowReachableBadge')
+                'showPercentage'     => (bool)$this->ReadPropertyBoolean('ShowPercentage'),
+                'showOpenDuration'   => (bool)$this->ReadPropertyBoolean('ShowOpenDuration'),
+                'showReachableBadge' => (bool)$this->ReadPropertyBoolean('ShowReachableBadge')
             ]
         ];
     }
