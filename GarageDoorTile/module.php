@@ -43,6 +43,12 @@ class GarageDoorTile extends IPSModule
         $this->RegisterPropertyInteger('TravelTimeCloseSec', 16);  // 16s Fahrzeit Schließen
         $this->RegisterPropertyInteger('WarnOpenMinutes', 30);     // Warnung ab 30 Min. offen
 
+        // Presets & Positionen
+        $this->RegisterPropertyInteger('DefaultVentilationPosition', 15); // Standard-Lüftung 15%
+        $this->RegisterPropertyBoolean('CustomPresetEnabled', true);
+        $this->RegisterPropertyString('CustomPresetLabel', 'Halb offen');
+        $this->RegisterPropertyInteger('CustomPresetPosition', 50);
+
         // Darstellung
         $this->RegisterPropertyString('TileTitle', 'Garagentor');
         $this->RegisterPropertyBoolean('ShowPercentage', true);
@@ -53,6 +59,7 @@ class GarageDoorTile extends IPSModule
         $this->RegisterTimer('ImpulseOff', 0, 'GARDOOR_HandleImpulseOff($_IPS[\'TARGET\']);');
         $this->RegisterTimer('TravelProgress', 0, 'GARDOOR_HandleTravelProgress($_IPS[\'TARGET\']);');
         $this->RegisterTimer('OpenDurationTick', 0, 'GARDOOR_HandleOpenDurationTick($_IPS[\'TARGET\']);');
+        $this->RegisterTimer('TargetStop', 0, 'GARDOOR_HandleTargetStop($_IPS[\'TARGET\']);');
 
         // Modul-Attribute für persistente Zustandsspeicherung
         $this->RegisterAttributeInteger('DoorState', self::STATE_CLOSED);
@@ -61,6 +68,7 @@ class GarageDoorTile extends IPSModule
         $this->RegisterAttributeFloat('MotionStartPosition', 0.0);
         $this->RegisterAttributeInteger('OpenedAtTimestamp', 0);
         $this->RegisterAttributeInteger('LastDirection', 1); // 1 = nach oben, -1 = nach unten
+        $this->RegisterAttributeFloat('TargetPosition', -1.0); // -1 = kein aktives Zielfahren
     }
 
     public function Destroy(): void
@@ -114,6 +122,16 @@ class GarageDoorTile extends IPSModule
         $this->MaintainVariable('OpenDuration', $this->Translate('Offen seit'), 1, '', 3, true);
         $this->MaintainVariable('ImpulseActive', $this->Translate('Taster-Impuls'), 0, '~Switch', 4, true);
 
+        // Child-Variable für Lüftungsstellung (in der Detailansicht einstellbar)
+        $this->MaintainVariable('VentilationPosition', $this->Translate('Lüftungsstellung'), 1, '~ShutterMoveStep', 5, true);
+        $this->EnableAction('VentilationPosition');
+
+        $ventVarID = @$this->GetIDForIdent('VentilationPosition');
+        if ($ventVarID > 0 && GetValueInteger($ventVarID) === 0) {
+            $defaultVent = max(5, $this->ReadPropertyInteger('DefaultVentilationPosition'));
+            $this->SetValue('VentilationPosition', $defaultVent);
+        }
+
         // 5. Initialen Zustand anhand des echten Endlagensensors abgleichen
         $this->SyncWithSensors();
 
@@ -141,13 +159,31 @@ class GarageDoorTile extends IPSModule
     }
 
     /**
-     * Empfängt Klicks und Aktionen aus der Kachel-UI
+     * Empfängt Klicks und Aktionen aus der Kachel-UI sowie native Variablenänderungen
      */
     public function RequestAction($Ident, $Value): void
     {
         switch ($Ident) {
             case 'triggerDoor':
                 $this->TriggerDoor();
+                break;
+
+            case 'triggerPresetVentilation':
+                $this->TriggerPresetVentilation();
+                break;
+
+            case 'triggerCustomPreset':
+                $this->TriggerCustomPreset();
+                break;
+
+            case 'moveToPosition':
+                $this->MoveToPosition((float)$Value);
+                break;
+
+            case 'VentilationPosition':
+                $val = max(0, min(100, (int)$Value));
+                $this->SetValue('VentilationPosition', $val);
+                $this->SendTileUpdate();
                 break;
 
             case 'refresh':
@@ -161,31 +197,47 @@ class GarageDoorTile extends IPSModule
     }
 
     /**
-     * Haupt-Aktion: Löst einen sicheren, zeitgesteuerten Tasterimpuls am Torantrieb aus
+     * Schaltet das Relais hardwareseitig für die konfigurierte Impulsdauer ein
      */
-    public function TriggerDoor(): void
+    private function PulseRelay(): bool
     {
         $reachID = $this->ReadPropertyInteger('ReachableVariable');
         if ($reachID > 0 && @IPS_VariableExists($reachID) && !GetValueBoolean($reachID)) {
-            $this->SendDebug('TriggerDoor', 'Abbruch: Shelly Aktor ist offline!', 0);
-            return;
+            $this->SendDebug('PulseRelay', 'Abbruch: Shelly Aktor ist offline!', 0);
+            return false;
         }
 
         $switchID = $this->ReadPropertyInteger('SwitchVariable');
         if ($switchID <= 0 || !@IPS_VariableExists($switchID)) {
-            $this->SendDebug('TriggerDoor', 'Fehler: Keine Schalter-Variable konfiguriert!', 0);
-            return;
+            $this->SendDebug('PulseRelay', 'Fehler: Keine Schalter-Variable konfiguriert!', 0);
+            return false;
         }
 
-        // 1. Relais hardwareseitig einschalten
+        // Relais hardwareseitig einschalten
         @RequestAction($switchID, true);
         $this->SetValue('ImpulseActive', true);
 
-        // 2. Automatisches Abschalten via Modul-Timer (Standard: 800 ms)
+        // Automatisches Abschalten via Modul-Timer (Standard: 800 ms)
         $durationMs = max(200, $this->ReadPropertyInteger('ImpulseDurationMs'));
         $this->SetTimerInterval('ImpulseOff', $durationMs);
 
-        // 3. State-Machine weiterschalten
+        return true;
+    }
+
+    /**
+     * Haupt-Aktion: Löst einen sicheren, zeitgesteuerten Tasterimpuls am Torantrieb aus
+     */
+    public function TriggerDoor(): void
+    {
+        // Aktiven TargetStop-Timer sofort abbrechen
+        $this->SetTimerInterval('TargetStop', 0);
+        $this->WriteAttributeFloat('TargetPosition', -1.0);
+
+        if (!$this->PulseRelay()) {
+            return;
+        }
+
+        // State-Machine weiterschalten
         $currentState = $this->ReadAttributeInteger('DoorState');
         $currentPos   = $this->ReadAttributeFloat('CurrentPosition');
         $lastDir      = $this->ReadAttributeInteger('LastDirection');
@@ -240,6 +292,160 @@ class GarageDoorTile extends IPSModule
 
         $this->UpdateChildVariables();
         $this->SendTileUpdate();
+    }
+
+    /**
+     * Fährt das Tor auf eine definierte Zielposition (0-100%) und stoppt automatisch per Impuls
+     */
+    public function MoveToPosition(float $targetPos): void
+    {
+        $targetPos = max(0.0, min(100.0, $targetPos));
+        $currentState = $this->ReadAttributeInteger('DoorState');
+        $currentPos   = $this->ReadAttributeFloat('CurrentPosition');
+
+        // Bereits am Ziel?
+        if (abs($currentPos - $targetPos) < 2.0 && in_array($currentState, [self::STATE_CLOSED, self::STATE_OPEN, self::STATE_STOPPED], true)) {
+            $this->SendDebug('MoveToPosition', "Tor bereits auf Zielposition {$targetPos}%", 0);
+            return;
+        }
+
+        // Falls das Tor gerade fährt -> manueller Stopp
+        if ($currentState === self::STATE_OPENING || $currentState === self::STATE_CLOSING) {
+            $this->TriggerDoor();
+            return;
+        }
+
+        // Eventuell aktiven TargetStop-Timer zunächst resetten
+        $this->SetTimerInterval('TargetStop', 0);
+        $this->WriteAttributeFloat('TargetPosition', -1.0);
+
+        // Volles Öffnen (100%) oder volles Schließen (0%)
+        if ($targetPos >= 98.0 && $currentState === self::STATE_CLOSED) {
+            $this->TriggerDoor();
+            return;
+        }
+        if ($targetPos <= 2.0 && ($currentState === self::STATE_OPEN || $currentState === self::STATE_STOPPED)) {
+            $this->TriggerDoor();
+            return;
+        }
+
+        $openTime  = max(2.0, (float)$this->ReadPropertyInteger('TravelTimeOpenSec'));
+        $closeTime = max(2.0, (float)$this->ReadPropertyInteger('TravelTimeCloseSec'));
+        $now       = microtime(true);
+
+        if ($currentState === self::STATE_CLOSED) {
+            // Aus geschlossenem Zustand: Startet Öffnen
+            $durationSec = ($targetPos / 100.0) * $openTime;
+            $durationMs  = (int)round($durationSec * 1000);
+
+            if (!$this->PulseRelay()) {
+                return;
+            }
+
+            $this->WriteAttributeInteger('DoorState', self::STATE_OPENING);
+            $this->WriteAttributeFloat('MotionStartTime', $now);
+            $this->WriteAttributeFloat('MotionStartPosition', 0.0);
+            $this->WriteAttributeInteger('LastDirection', 1);
+            $this->WriteAttributeInteger('OpenedAtTimestamp', time());
+            $this->WriteAttributeFloat('TargetPosition', $targetPos);
+
+            $this->SetTimerInterval('TargetStop', max(600, $durationMs));
+            $this->SetTimerInterval('TravelProgress', 250);
+            $this->SetTimerInterval('OpenDurationTick', 60000);
+        } elseif ($currentState === self::STATE_OPEN) {
+            // Aus offenem Zustand: Startet Schließen
+            $durationSec = ((100.0 - $targetPos) / 100.0) * $closeTime;
+            $durationMs  = (int)round($durationSec * 1000);
+
+            if (!$this->PulseRelay()) {
+                return;
+            }
+
+            $this->WriteAttributeInteger('DoorState', self::STATE_CLOSING);
+            $this->WriteAttributeFloat('MotionStartTime', $now);
+            $this->WriteAttributeFloat('MotionStartPosition', 100.0);
+            $this->WriteAttributeInteger('LastDirection', -1);
+            $this->WriteAttributeFloat('TargetPosition', $targetPos);
+
+            $this->SetTimerInterval('TargetStop', max(600, $durationMs));
+            $this->SetTimerInterval('TravelProgress', 250);
+        } elseif ($currentState === self::STATE_STOPPED) {
+            // Im Stillstand (Zwischenposition)
+            if ($targetPos > $currentPos) {
+                // Öffnen
+                $durationSec = (($targetPos - $currentPos) / 100.0) * $openTime;
+                $durationMs  = (int)round($durationSec * 1000);
+                $newState    = self::STATE_OPENING;
+                $dir         = 1;
+            } else {
+                // Schließen
+                $durationSec = (($currentPos - $targetPos) / 100.0) * $closeTime;
+                $durationMs  = (int)round($durationSec * 1000);
+                $newState    = self::STATE_CLOSING;
+                $dir         = -1;
+            }
+
+            if (!$this->PulseRelay()) {
+                return;
+            }
+
+            $this->WriteAttributeInteger('DoorState', $newState);
+            $this->WriteAttributeFloat('MotionStartTime', $now);
+            $this->WriteAttributeFloat('MotionStartPosition', $currentPos);
+            $this->WriteAttributeInteger('LastDirection', $dir);
+            $this->WriteAttributeFloat('TargetPosition', $targetPos);
+
+            $this->SetTimerInterval('TargetStop', max(600, $durationMs));
+            $this->SetTimerInterval('TravelProgress', 250);
+        }
+
+        $this->UpdateChildVariables();
+        $this->SendTileUpdate();
+    }
+
+    /**
+     * Stoppt die Torfahrt bei Erreichen der Zielposition (TargetPosition)
+     */
+    public function HandleTargetStop(): void
+    {
+        $this->SetTimerInterval('TargetStop', 0);
+        $targetPos = $this->ReadAttributeFloat('TargetPosition');
+        $this->WriteAttributeFloat('TargetPosition', -1.0);
+
+        // Stopp-Impuls senden
+        $this->PulseRelay();
+
+        // Zustand auf STOPPED setzen und Position kalibrieren
+        $this->WriteAttributeInteger('DoorState', self::STATE_STOPPED);
+        if ($targetPos >= 0.0) {
+            $this->WriteAttributeFloat('CurrentPosition', $targetPos);
+        }
+        $this->SetTimerInterval('TravelProgress', 0);
+
+        $this->UpdateChildVariables();
+        $this->SendTileUpdate();
+    }
+
+    /**
+     * Fährt die konfigurierte Lüftungsstellung an
+     */
+    public function TriggerPresetVentilation(): void
+    {
+        $ventVarID = @$this->GetIDForIdent('VentilationPosition');
+        $ventPos = ($ventVarID > 0) ? GetValueInteger($ventVarID) : $this->ReadPropertyInteger('DefaultVentilationPosition');
+        if ($ventPos <= 0) {
+            $ventPos = 15;
+        }
+        $this->MoveToPosition((float)$ventPos);
+    }
+
+    /**
+     * Fährt das konfigurierte Custom-Preset an
+     */
+    public function TriggerCustomPreset(): void
+    {
+        $customPos = $this->ReadPropertyInteger('CustomPresetPosition');
+        $this->MoveToPosition((float)$customPos);
     }
 
     /**
@@ -366,6 +572,8 @@ class GarageDoorTile extends IPSModule
 
         if ($isClosed) {
             // Tor ist physisch definitiv geschlossen
+            $this->SetTimerInterval('TargetStop', 0);
+            $this->WriteAttributeFloat('TargetPosition', -1.0);
             $this->WriteAttributeInteger('DoorState', self::STATE_CLOSED);
             $this->WriteAttributeFloat('CurrentPosition', 0.0);
             $this->WriteAttributeInteger('OpenedAtTimestamp', 0);
@@ -455,6 +663,18 @@ class GarageDoorTile extends IPSModule
             $impulseActive = GetValueBoolean($switchID);
         }
 
+        // Presets & Zielpositionen
+        $ventVarID = @$this->GetIDForIdent('VentilationPosition');
+        $ventPos = ($ventVarID > 0) ? GetValueInteger($ventVarID) : $this->ReadPropertyInteger('DefaultVentilationPosition');
+        if ($ventPos <= 0) {
+            $ventPos = 15;
+        }
+
+        $customEnabled = $this->ReadPropertyBoolean('CustomPresetEnabled');
+        $customLabel   = $this->ReadPropertyString('CustomPresetLabel');
+        $customPos     = $this->ReadPropertyInteger('CustomPresetPosition');
+        $targetPos     = $this->ReadAttributeFloat('TargetPosition');
+
         return [
             'state'                => $stateInfo['key'],
             'stateCode'            => $state,
@@ -463,12 +683,26 @@ class GarageDoorTile extends IPSModule
             'buttonText'           => $stateInfo['btn'],
             'position'             => (int)$pos,
             'positionFormatted'    => (int)$pos . ' %',
+            'targetPosition'       => $targetPos >= 0.0 ? (int)round($targetPos) : null,
             'openDurationMinutes'  => $openMinutes,
             'openDurationText'     => $openDurationText,
             'isWarning'            => $isWarn,
             'isOnline'             => $isOnline,
             'impulseActive'        => $impulseActive,
             'title'                => $this->ReadPropertyString('TileTitle'),
+            'presets'              => [
+                'ventilation' => [
+                    'position' => $ventPos,
+                    'label'    => sprintf($this->Translate('Lüften %d%%'), $ventPos),
+                    'active'   => ($targetPos >= 0.0 && abs($targetPos - $ventPos) < 1.0)
+                ],
+                'custom' => [
+                    'enabled'  => $customEnabled,
+                    'position' => $customPos,
+                    'label'    => !empty($customLabel) ? sprintf('%s %d%%', $customLabel, $customPos) : sprintf($this->Translate('Preset %d%%'), $customPos),
+                    'active'   => ($targetPos >= 0.0 && abs($targetPos - $customPos) < 1.0)
+                ]
+            ],
             'options'              => [
                 'showPercentage'     => $this->ReadPropertyBoolean('ShowPercentage'),
                 'showOpenDuration'   => $this->ReadPropertyBoolean('ShowOpenDuration'),

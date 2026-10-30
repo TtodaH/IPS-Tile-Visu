@@ -280,11 +280,96 @@
             100% { background: var(--btn-bg); }
         }
 
+        .btn-svg {
+            width: 14px;
+            height: 14px;
+            display: inline-block;
+            vertical-align: middle;
+            fill: currentColor;
+            flex-shrink: 0;
+        }
+
+        .preset-svg {
+            width: 13px;
+            height: 13px;
+            display: inline-block;
+            vertical-align: middle;
+            flex-shrink: 0;
+        }
+
         .btn-icon {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             font-size: 14px;
+        }
+
+        /* Presets Row */
+        .presets-row {
+            width: 100%;
+            max-width: 280px;
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .preset-btn {
+            flex: 1 1 0;
+            min-width: 0;
+            height: 28px;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-sub);
+            font-size: 11px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            outline: none;
+            padding: 0 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .preset-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.25);
+            color: var(--text-main);
+        }
+
+        .preset-btn:active {
+            transform: scale(0.96);
+        }
+
+        .preset-btn.active-target {
+            border-color: #38BDF8;
+            color: #38BDF8;
+            background: rgba(56, 189, 248, 0.15);
+            box-shadow: 0 0 8px rgba(56, 189, 248, 0.25);
+        }
+
+        .preset-btn.impulse-active {
+            animation: impulse-flash 0.8s ease-out;
+            border-color: #38BDF8 !important;
+        }
+
+        .preset-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            flex-shrink: 0;
+        }
+
+        .preset-label {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .meta-row {
@@ -452,9 +537,35 @@
             </div>
 
             <button class="action-button" id="triggerBtn" onclick="handleDoorClick()">
-                <span class="btn-icon" id="btnIcon">⏏</span>
+                <svg class="btn-svg" id="btnSvg" viewBox="0 0 24 24" fill="currentColor">
+                    <path id="btnSvgPath" d="M12 5l7 7H5z"/>
+                </svg>
                 <span id="btnText">Tor bedienen</span>
             </button>
+
+            <!-- Presets Row -->
+            <div class="presets-row" id="presetsRow">
+                <button class="preset-btn" id="presetVentBtn" onclick="handlePresetClick('ventilation')" title="In Lüftungsstellung fahren">
+                    <svg class="preset-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"></path>
+                    </svg>
+                    <span class="preset-label" id="presetVentLabel">Lüften 15%</span>
+                </button>
+                <button class="preset-btn" id="presetCustomBtn" onclick="handlePresetClick('custom')" title="Preset anfahren">
+                    <svg class="preset-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="4" y1="21" x2="4" y2="14"></line>
+                        <line x1="4" y1="10" x2="4" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12" y2="3"></line>
+                        <line x1="20" y1="21" x2="20" y2="16"></line>
+                        <line x1="20" y1="12" x2="20" y2="3"></line>
+                        <line x1="1" y1="14" x2="7" y2="14"></line>
+                        <line x1="9" y1="8" x2="15" y2="8"></line>
+                        <line x1="17" y1="16" x2="23" y2="16"></line>
+                    </svg>
+                    <span class="preset-label" id="presetCustomLabel">Halb offen 50%</span>
+                </button>
+            </div>
 
             <div class="meta-row">
                 <div class="open-duration" id="openDurationWrap">
@@ -486,6 +597,26 @@
                 requestAction('triggerDoor', true);
             } else {
                 console.log("requestAction('triggerDoor', true) triggered (Web SDK Preview)");
+            }
+        }
+
+        function handlePresetClick(type) {
+            const btn = (type === 'ventilation') ? document.getElementById('presetVentBtn') : document.getElementById('presetCustomBtn');
+            if (btn) {
+                btn.classList.add('impulse-active');
+                setTimeout(() => {
+                    btn.classList.remove('impulse-active');
+                }, 800);
+            }
+
+            if (typeof requestAction === 'function') {
+                if (type === 'ventilation') {
+                    requestAction('triggerPresetVentilation', true);
+                } else if (type === 'custom') {
+                    requestAction('triggerCustomPreset', true);
+                }
+            } else {
+                console.log(`requestAction('${type === 'ventilation' ? 'triggerPresetVentilation' : 'triggerCustomPreset'}', true) triggered`);
             }
         }
 
@@ -566,7 +697,7 @@
 
             // 6. Action Button Text, Icon & State styling
             const btnText = document.getElementById('btnText');
-            const btnIcon = document.getElementById('btnIcon');
+            const btnSvgPath = document.getElementById('btnSvgPath');
             const triggerBtn = document.getElementById('triggerBtn');
             if (btnText) {
                 btnText.textContent = data.buttonText || 'Tor bedienen';
@@ -575,15 +706,15 @@
                 // Feine Umrandung passend zum Zustand
                 triggerBtn.style.borderColor = data.stateColor + '55';
             }
-            if (btnIcon) {
+            if (btnSvgPath) {
                 if (data.state === 'closed') {
-                    btnIcon.textContent = '▲';
+                    btnSvgPath.setAttribute('d', 'M12 5l7 7H5z'); // Up arrow
                 } else if (data.state === 'open') {
-                    btnIcon.textContent = '▼';
+                    btnSvgPath.setAttribute('d', 'M12 19l-7-7h14z'); // Down arrow
                 } else if (data.state === 'opening' || data.state === 'closing') {
-                    btnIcon.textContent = '⏹';
+                    btnSvgPath.setAttribute('d', 'M6 6h12v12H6z'); // Stop square
                 } else {
-                    btnIcon.textContent = '⏏';
+                    btnSvgPath.setAttribute('d', 'M5 17h14v2H5zm7-12l7 7H5z'); // Step / Eject
                 }
             }
 
@@ -611,6 +742,37 @@
                     }
                 } else {
                     openWrap.style.display = 'none';
+                }
+            }
+
+            // 9. Presets (Lüftung & Custom)
+            if (data.presets) {
+                const ventBtn = document.getElementById('presetVentBtn');
+                const ventLabel = document.getElementById('presetVentLabel');
+                const customBtn = document.getElementById('presetCustomBtn');
+                const customLabel = document.getElementById('presetCustomLabel');
+
+                if (ventBtn && ventLabel && data.presets.ventilation) {
+                    ventLabel.textContent = data.presets.ventilation.label || 'Lüften';
+                    if (data.presets.ventilation.active) {
+                        ventBtn.classList.add('active-target');
+                    } else {
+                        ventBtn.classList.remove('active-target');
+                    }
+                }
+
+                if (customBtn && customLabel && data.presets.custom) {
+                    if (data.presets.custom.enabled !== false) {
+                        customBtn.style.display = 'inline-flex';
+                        customLabel.textContent = data.presets.custom.label || 'Preset';
+                        if (data.presets.custom.active) {
+                            customBtn.classList.add('active-target');
+                        } else {
+                            customBtn.classList.remove('active-target');
+                        }
+                    } else {
+                        customBtn.style.display = 'none';
+                    }
                 }
             }
 

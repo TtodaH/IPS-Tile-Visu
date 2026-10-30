@@ -70,6 +70,38 @@
         },
         {
             "type": "ExpansionPanel",
+            "caption": "Presets & Positionen",
+            "items": [
+                {
+                    "type": "NumberSpinner",
+                    "name": "DefaultVentilationPosition",
+                    "caption": "Standard-Lüftungsstellung (0–100%)",
+                    "minimum": 5,
+                    "maximum": 50,
+                    "suffix": "%"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "CustomPresetEnabled",
+                    "caption": "Frei konfigurierbaren Preset-Knopf aktivieren"
+                },
+                {
+                    "type": "ValidationTextBox",
+                    "name": "CustomPresetLabel",
+                    "caption": "Beschriftung des Custom-Presets (z.B. 'Halb offen')"
+                },
+                {
+                    "type": "NumberSpinner",
+                    "name": "CustomPresetPosition",
+                    "caption": "Zielposition für Custom-Preset (0–100%)",
+                    "minimum": 0,
+                    "maximum": 100,
+                    "suffix": "%"
+                }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
             "caption": "Darstellung & Beschriftung",
             "items": [
                 {
@@ -100,6 +132,11 @@
             "type": "Button",
             "caption": "Tor betätigen (Taster-Impuls senden)",
             "onClick": "GARDOOR_TriggerDoor($id);"
+        },
+        {
+            "type": "Button",
+            "caption": "Lüftungsstellung anfahren (Preset)",
+            "onClick": "GARDOOR_TriggerPresetVentilation($id);"
         }
     ]
 }
