@@ -497,7 +497,7 @@
         function handleMessage(data) {
             if (!data) return;
 
-            // IP-Symcon UpdateVisualizationValue übergibt die Daten als JSON-String
+            // 1. IP-Symcon UpdateVisualizationValue übergibt die Daten als JSON-String
             if (typeof data === 'string') {
                 try {
                     data = JSON.parse(data);
@@ -507,9 +507,35 @@
                 }
             }
 
+            // 2. Falls Daten in { value: ... } gewrappt sind (z.B. bei manchen postMessage Implementierungen)
+            if (data && typeof data === 'object' && typeof data.value !== 'undefined') {
+                if (typeof data.value === 'string') {
+                    try { data = JSON.parse(data.value); } catch (e) {}
+                } else if (typeof data.value === 'object' && data.value !== null) {
+                    data = data.value;
+                }
+            }
+
             if (!data || typeof data !== 'object') return;
 
-            // 1. Farben & Optionen aktualisieren (falls im Datensatz)
+            // 3. Sicherheits-Check: Nur echte Wetter-Payloads verarbeiten!
+            // Verhindert, dass interne Symcon-Nachrichten (Handshake, Theme, Resize) den DOM-Zustand löschen.
+            const hasWeatherData = (
+                data.windDirection !== undefined ||
+                data.degrees !== undefined ||
+                data.outdoorTemp !== undefined ||
+                data.outdoorTempFormatted !== undefined ||
+                data.secondaryTemp !== undefined ||
+                data.secondaryTempFormatted !== undefined ||
+                data.windSpeed !== undefined ||
+                data.windSpeedFormatted !== undefined ||
+                data.bft !== undefined
+            );
+            if (!hasWeatherData) {
+                return;
+            }
+
+            // 4. Farben & Optionen aktualisieren (falls im Datensatz)
             if (data.colors) {
                 if (data.colors.needle) {
                     const elLeft = document.getElementById('needleFrontLeft');
@@ -531,7 +557,7 @@
                 }
             }
 
-            // 2. Windrichtung & kontinuierliche Nadel-Rotation
+            // 5. Windrichtung & kontinuierliche Nadel-Rotation
             const dirVal = (typeof data.windDirection === 'number') 
                 ? data.windDirection 
                 : ((typeof data.degrees === 'number') ? data.degrees : null);
@@ -555,7 +581,7 @@
                     ghostNeedle.style.display = 'block';
                     currentGhostVisualAngle = calculateContinuousRotation(prevVal, currentGhostVisualAngle);
                     ghostNeedle.style.transform = `rotate(${currentGhostVisualAngle}deg)`;
-                } else {
+                } else if (data.options && data.options.showPreviousDirection === false) {
                     ghostNeedle.style.display = 'none';
                 }
             }
@@ -574,7 +600,7 @@
                 }
             }
 
-            // 3. Außentemperatur & Sekundärtemperatur (Stall/Wärmepumpe)
+            // 6. Außentemperatur & Sekundärtemperatur (Stall/Wärmepumpe)
             const tempOutdoorEl = document.getElementById('tempOutdoor');
             if (tempOutdoorEl && data.outdoorTempFormatted !== undefined) {
                 tempOutdoorEl.textContent = data.outdoorTempFormatted;
@@ -588,20 +614,23 @@
                 const showSec = (data.options && typeof data.options.showSecondaryTemp !== 'undefined')
                     ? data.options.showSecondaryTemp
                     : true;
-                const secVal = (data.secondaryTempFormatted !== undefined && data.secondaryTempFormatted !== null)
-                    ? data.secondaryTempFormatted
-                    : (data.secondaryTemp !== undefined ? String(data.secondaryTemp).replace('.', ',') : null);
 
-                if (showSec && secVal !== null) {
-                    secTempWrap.style.display = 'inline-block';
-                    if (tempSecondaryEl) tempSecondaryEl.textContent = `${secVal} °C`;
-                    if (secLabelEl && data.secondaryTempLabel) secLabelEl.textContent = data.secondaryTempLabel;
-                } else {
+                if (!showSec) {
                     secTempWrap.style.display = 'none';
+                } else {
+                    const secVal = (data.secondaryTempFormatted !== undefined && data.secondaryTempFormatted !== null && data.secondaryTempFormatted !== '--,-')
+                        ? data.secondaryTempFormatted
+                        : (data.secondaryTemp !== undefined && data.secondaryTemp !== null ? String(data.secondaryTemp).replace('.', ',') : null);
+
+                    if (secVal !== null) {
+                        secTempWrap.style.display = 'inline-block';
+                        if (tempSecondaryEl) tempSecondaryEl.textContent = `${secVal} °C`;
+                        if (secLabelEl && data.secondaryTempLabel) secLabelEl.textContent = data.secondaryTempLabel;
+                    }
                 }
             }
 
-            // 4. Windgeschwindigkeit, Böe & Beaufort
+            // 7. Windgeschwindigkeit, Böe & Beaufort
             const speedValEl = document.getElementById('speedVal');
             if (speedValEl && data.windSpeedFormatted !== undefined) {
                 const unit = data.windSpeedUnit || 'km/h';
@@ -615,11 +644,11 @@
                     ? data.gust
                     : (data.gustFormatted ? parseFloat(String(data.gustFormatted).replace(',', '.')) : 0);
 
+                const unit = data.gustUnit || data.windSpeedUnit || 'km/h';
                 if (data.gustFormatted && gustVal > 0) {
                     gustWrap.style.display = 'inline';
-                    const unit = data.gustUnit || data.windSpeedUnit || 'km/h';
                     gustValEl.textContent = `Böe ${data.gustFormatted} ${unit}`;
-                } else {
+                } else if (data.gust !== undefined || data.gustFormatted !== undefined) {
                     gustWrap.style.display = 'none';
                 }
             }
@@ -629,16 +658,17 @@
                 const showBft = (data.options && typeof data.options.showBeaufort !== 'undefined')
                     ? data.options.showBeaufort
                     : true;
-                if (showBft && data.bft !== undefined && data.bft !== null) {
+
+                if (!showBft) {
+                    bftValEl.style.display = 'none';
+                } else if (data.bft !== undefined && data.bft !== null) {
                     bftValEl.style.display = 'block';
                     const bftDesc = data.bftText ? ` (${data.bftText})` : '';
                     bftValEl.textContent = `${data.bft} Bft${bftDesc}`;
-                } else {
-                    bftValEl.style.display = 'none';
                 }
             }
 
-            // 5. Status-Pills (Regenwarnung bei aktivem Regen)
+            // 8. Status-Pills (Regenwarnung bei aktivem Regen)
             const topBar = document.getElementById('topBar');
             const rainPill = document.getElementById('rainPill');
             const rainIcon = document.getElementById('rainIcon');
@@ -670,10 +700,15 @@
         window.handleMessage = handleMessage;
         window.updateVisual = handleMessage;
 
-        // Falls __INITIAL_DATA__ bereits gesetzt ist, sofort anwenden
+        // Sofortige Ausführung bei Initialisierung
         if (typeof window.__INITIAL_DATA__ !== 'undefined') {
             handleMessage(window.__INITIAL_DATA__);
         }
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof window.__INITIAL_DATA__ !== 'undefined') {
+                handleMessage(window.__INITIAL_DATA__);
+            }
+        });
     </script>
 </body>
 </html>

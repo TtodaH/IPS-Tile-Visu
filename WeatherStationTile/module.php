@@ -174,10 +174,47 @@ class WeatherStationTile extends IPSModule
             return '<div style="color:red;padding:10px;">module.html nicht gefunden!</div>';
         }
 
+        // 1. WebSocket-Zustand in IP-Symcon sofort synchronisieren
+        $payload = $this->GetWeatherPayload();
+        $this->UpdateVisualizationValue(json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+
         $html = file_get_contents($htmlFile);
 
-        // Initiales Datenpaket sofort beim ersten Laden der Kachel übergeben
-        $initialData = json_encode($this->GetWeatherPayload(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        // 2. HTML-Platzhalter direkt vorab mit echten Werten befüllen (Zero-Delay Rendering auf Frame 0)
+        if ($payload['outdoorTempFormatted'] !== '--,-') {
+            $html = str_replace('>--,-<', '>' . $payload['outdoorTempFormatted'] . '<', $html);
+        }
+
+        if ($payload['secondaryTempFormatted'] !== '--,-' && ($payload['options']['showSecondaryTemp'] ?? true)) {
+            $html = str_replace('>--,- °C<', '>' . $payload['secondaryTempFormatted'] . ' °C<', $html);
+            if (!empty($payload['secondaryTempLabel'])) {
+                $html = str_replace('>Stall<', '>' . htmlspecialchars($payload['secondaryTempLabel']) . '<', $html);
+            }
+        } elseif (!($payload['options']['showSecondaryTemp'] ?? true) || $payload['secondaryTempFormatted'] === '--,-') {
+            $html = str_replace('id="secondaryTempWrap"', 'id="secondaryTempWrap" style="display:none;"', $html);
+        }
+
+        $html = str_replace('>0,0 km/h<', '>' . $payload['windSpeedFormatted'] . ' ' . $payload['windSpeedUnit'] . '<', $html);
+
+        if ($payload['gust'] > 0) {
+            $html = str_replace('id="gustWrap" style="display:none;"', 'id="gustWrap" style="display:inline;"', $html);
+            $html = str_replace('>Böe 0,0<', '>Böe ' . $payload['gustFormatted'] . ' ' . $payload['gustUnit'] . '<', $html);
+        }
+
+        if ($payload['options']['showBeaufort'] ?? true) {
+            $bftText = $payload['bft'] . ' Bft (' . $payload['bftText'] . ')';
+            $html = str_replace('>0 Bft (Windstille)<', '>' . $bftText . '<', $html);
+        } else {
+            $html = str_replace('id="bftVal"', 'id="bftVal" style="display:none;"', $html);
+        }
+
+        $html = str_replace('>N<', '>' . $payload['cardinal'] . '<', $html);
+        $cardSub = '(' . round($payload['windDirection']) . '°) · ' . $payload['cardinalText'];
+        $html = str_replace('>(0°) · Nord<', '>' . $cardSub . '<', $html);
+        $html = str_replace('id="needleGroup" transform="rotate(0 60 60)"', 'id="needleGroup" transform="rotate(' . round($payload['windDirection'], 1) . ' 60 60)" style="transform: rotate(' . round($payload['windDirection'], 1) . 'deg);"', $html);
+
+        // 3. Initiales Datenpaket sofort beim ersten Laden der Kachel übergeben
+        $initialData = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $script = '<script>window.__INITIAL_DATA__ = ' . $initialData . '; if (typeof handleMessage === "function") { handleMessage(window.__INITIAL_DATA__); }</script>';
 
         return str_replace('</body>', $script . '</body>', $html);
