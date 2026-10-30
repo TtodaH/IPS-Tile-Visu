@@ -146,8 +146,8 @@ class WeatherStationTile extends IPSModule
         $this->MaintainVariable('WindDirection', $this->Translate('Windrichtung'), 2, '~WindDirection.Text', 4, $dirID > 0);
         $secLabel = $this->ReadPropertyString('SecondaryTempLabel');
         $this->MaintainVariable('SecondaryTemperature', $secLabel ? $secLabel : $this->Translate('Sekundärtemperatur'), 2, '~Temperature', 5, $tempSecID > 0);
-        $this->MaintainVariable('Rain', $this->Translate('Regen'), 0, '~Rain', 6, $rainID > 0);
-        $this->MaintainVariable('Battery', $this->Translate('Batterie'), 0, '~Battery', 7, $batteryID > 0);
+        $this->MaintainVariable('Rain', $this->Translate('Regen'), 0, '~Raining', 6, $rainID > 0);
+        $this->MaintainVariable('Battery', $this->Translate('Batterie'), 0, '~Battery.Reversed', 7, $batteryID > 0);
 
         $sensorVars = [
             $dirID, $speedID, $gustID, $prevDirID, $tempOutID, $tempSecID, $rainID, $batteryID
