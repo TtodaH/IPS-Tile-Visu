@@ -36,8 +36,8 @@ class TileTemplate extends IPSModule
         // Niemals entfernen!
         parent::Create();
 
-        // Aktiviert das IP-Symcon HTML-SDK für Kachelvisualisierung (1 = INSTANCE_VISUALIZATION_TYPE_HTML)
-        $this->SetVisualizationType(1);
+        // Aktiviert das IP-Symcon HTML-SDK für Kachelvisualisierung UND Vollbildmodus (2 = INSTANCE_VISUALIZATION_TYPE_HTML_FULLSCREEN)
+        $this->SetVisualizationType(2);
 
         // Variablen-Verknüpfungen
         $this->RegisterPropertyInteger('PrimaryVariable', 0);
@@ -62,6 +62,9 @@ class TileTemplate extends IPSModule
     public function ApplyChanges(): void
     {
         parent::ApplyChanges();
+
+        // Stellt sicher, dass Kachel- und Vollbild-Visualisierung (Typ 2) aktiv sind
+        $this->SetVisualizationType(2);
 
         // 1. Alle bisherigen Nachrichten-Registrierungen sauber entfernen
         foreach ($this->GetMessageList() as $senderID => $messageIDs) {

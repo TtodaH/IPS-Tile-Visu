@@ -44,6 +44,8 @@
         html, body {
             width: 100%;
             height: 100%;
+            margin: 0;
+            padding: 0;
             overflow: hidden;
             background: transparent;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -59,7 +61,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: space-between;
-            padding: 4px 10px 6px 10px;
+            padding: 6px 12px;
             box-sizing: border-box;
             overflow: hidden;
         }
@@ -71,8 +73,9 @@
             justify-content: space-between;
             width: 100%;
             flex-shrink: 0;
-            font-size: clamp(8.5px, 2.6cqw, 11px);
+            font-size: clamp(8.5px, 2.5cqw, 11px);
             font-weight: 600;
+            min-height: 0;
             margin-bottom: 2px;
         }
 
@@ -108,7 +111,7 @@
             display: none !important;
         }
 
-        /* Mittlerer Hero-Bereich: Windrose (nimmt flexibel den Restplatz ein) */
+        /* Hero-Bereich (Windrose): füllt flexibel den Restplatz aus */
         .wr-compass-hero {
             display: flex;
             flex-direction: column;
@@ -122,7 +125,7 @@
             overflow: hidden;
         }
 
-        /* SVG-Wrapper: Garantiert, dass SVG niemals die Kachel überläuft */
+        /* SVG-Wrapper: Garantiert sauberes Skalieren ohne Flexbox-Überlauf */
         .wr-svg-wrap {
             display: flex;
             align-items: center;
@@ -134,16 +137,17 @@
             height: 100%;
             max-height: 100%;
             overflow: hidden;
+            position: relative;
         }
 
         .wr-svg {
             width: auto;
-            height: 100%;
+            height: auto;
             max-width: 100%;
             max-height: 100%;
             aspect-ratio: 1 / 1;
             object-fit: contain;
-            overflow: visible;
+            display: block;
         }
 
         /* Nadelrotation: butterweiche 60fps CSS Transitions */
@@ -161,13 +165,13 @@
         /* Himmelsrichtung Badge unter dem Kompass */
         .wr-cardinal-badge {
             flex-shrink: 0;
-            font-size: clamp(10.5px, min(3.5cqw, 3.8cqh), 14px);
+            font-size: clamp(10.5px, min(3.5cqw, 3.8cqh), 15px);
             font-weight: 700;
             color: var(--text-primary);
             text-align: center;
             letter-spacing: 0.3px;
             line-height: 1.1;
-            margin-top: 2px;
+            margin-top: 3px;
             white-space: nowrap;
         }
 
@@ -184,7 +188,7 @@
             background: var(--divider-color);
             width: 100%;
             flex-shrink: 0;
-            margin: 3px 0 4px 0;
+            margin: 4px 0 5px 0;
         }
 
         /* Footer mit Temperaturen & Windwerten (bleibt IMMER sichtbar) */
@@ -193,8 +197,8 @@
             flex-direction: column;
             width: 100%;
             flex-shrink: 0;
-            gap: 2px;
-            padding-bottom: 1px;
+            gap: 3px;
+            padding-bottom: 2px;
         }
 
         .wr-row1 {
@@ -205,7 +209,7 @@
         }
 
         .wr-temp-val {
-            font-size: clamp(16px, min(5.8cqw, 6.2cqh), 24px);
+            font-size: clamp(16px, min(5.8cqw, 6.2cqh), 28px);
             font-weight: 800;
             color: var(--text-primary);
             letter-spacing: -0.5px;
@@ -213,7 +217,7 @@
         }
 
         .wr-temp-unit {
-            font-size: clamp(10.5px, min(3.5cqw, 3.8cqh), 15px);
+            font-size: clamp(10.5px, min(3.5cqw, 3.8cqh), 16px);
             font-weight: 600;
             color: var(--text-secondary);
             margin-left: 1px;
@@ -229,7 +233,7 @@
         }
 
         .wr-stall {
-            font-size: clamp(10px, min(3.2cqw, 3.5cqh), 13px);
+            font-size: clamp(10px, min(3.2cqw, 3.5cqh), 14px);
             color: var(--text-muted);
             font-weight: 500;
             white-space: nowrap;
@@ -245,7 +249,7 @@
             align-items: baseline;
             justify-content: space-between;
             width: 100%;
-            font-size: clamp(9.5px, min(3.2cqw, 3.5cqh), 13.5px);
+            font-size: clamp(9.5px, min(3.2cqw, 3.5cqh), 14px);
             line-height: 1.2;
             white-space: nowrap;
         }
@@ -273,21 +277,64 @@
         }
 
         /* ---------------------------------------------------- */
+        /* Vollbild-Modus & Vergrößerte Kachelansicht          */
+        /* ---------------------------------------------------- */
+        @container (min-height: 380px) and (min-width: 320px) {
+            .wr-container {
+                padding: 18px 26px;
+            }
+            .wr-divider {
+                margin: 10px 0 12px 0;
+            }
+            .wr-footer {
+                gap: 8px;
+                padding-bottom: 8px;
+            }
+            .wr-temp-val {
+                font-size: clamp(28px, 6cqw, 42px);
+            }
+            .wr-temp-unit {
+                font-size: 20px;
+            }
+            .wr-temp-tag {
+                font-size: 13px;
+            }
+            .wr-stall {
+                font-size: 16px;
+            }
+            .wr-row2 {
+                font-size: 16.5px;
+            }
+            .wr-cardinal-badge {
+                font-size: 20px;
+                margin-top: 8px;
+            }
+            .wr-top-bar {
+                font-size: 13px;
+                margin-bottom: 8px;
+            }
+            .wr-status-pill {
+                padding: 3px 10px;
+                font-size: 12.5px;
+            }
+        }
+
+        /* ---------------------------------------------------- */
         /* Breites Kachel-Layout (2 Spalten: Links Kompass, Rechts Daten) */
         /* ---------------------------------------------------- */
-        @container (aspect-ratio >= 1.4) and (min-width: 250px) {
+        @container (aspect-ratio >= 1.45) and (max-height: 360px) {
             .wr-container {
                 flex-direction: row;
                 align-items: center;
                 justify-content: space-between;
-                gap: 10px;
-                padding: 6px 12px;
+                gap: 12px;
+                padding: 8px 16px;
             }
 
             .wr-top-bar {
                 position: absolute;
-                top: 5px;
-                right: 10px;
+                top: 6px;
+                right: 12px;
                 width: auto;
                 gap: 5px;
                 margin-bottom: 0;
@@ -607,9 +654,8 @@
                         document.getElementById('rainIcon').textContent = '🌧️';
                         document.getElementById('rainText').textContent = 'Regen';
                     } else {
-                        // Bei trocken nur dezent anzeigen oder ausblenden
                         rainPill.classList.remove('rain');
-                        rainPill.classList.add('hidden'); // Trocken ausblenden um Platz zu sparen
+                        rainPill.classList.add('hidden');
                     }
                 } else {
                     rainPill.classList.add('hidden');
@@ -626,7 +672,7 @@
                         document.getElementById('batteryIcon').textContent = '⚠️';
                         document.getElementById('batteryText').textContent = 'Batterie schwach';
                     } else {
-                        batPill.classList.add('hidden'); // Bei OK dezent ausblenden
+                        batPill.classList.add('hidden');
                     }
                 } else {
                     batPill.classList.add('hidden');
