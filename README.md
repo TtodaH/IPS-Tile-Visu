@@ -3,7 +3,7 @@
 [![IP-Symcon](https://img.shields.io/badge/IP--Symcon-7.1%2B-blue.svg)](https://www.symcon.de)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Umfassende Modul-Bibliothek und Entwickler-Vorlage für **moderne, flackerfreie Kachel-Visualisierungen** in IP-Symcon ab Version 7.1 (HTML-SDK).
+Umfassende Modul-Bibliothek und Entwickler-Vorlage für **moderne, flackerfreie Kachel-Visualisierungen** in IP-Symcon ab Version 7.1 (getestet bis IP-Symcon 9.0) unter Verwendung des offiziellen **HTML-SDKs**.
 
 Inspiriert durch das Konzept von [*da8ter/TileVisu-Universelle-Geraete-Kachel*](https://github.com/da8ter/TileVisu-Universelle-Geraete-Kachel).
 
@@ -14,9 +14,11 @@ Inspiriert durch das Konzept von [*da8ter/TileVisu-Universelle-Geraete-Kachel*](
 1. [Enthaltene Module](#enthaltene-module)
 2. [Problemanalyse: Warum flackert die bisherige Visualisierung?](#problemanalyse-warum-flackert-die-bisherige-visualisierung)
 3. [Die Lösung: Das IP-Symcon HTML-SDK](#die-lösung-das-ip-symcon-html-sdk)
-4. [Installation in IP-Symcon](#installation-in-ip-symcon)
-5. [Konfiguration der Wetterstation (IDs aus Screenshot)](#konfiguration-der-wetterstation-ids-aus-screenshot)
-6. [Sofort-Hilfe für das bestehende Skript (Legacy-Fix)](#sofort-hilfe-für-das-bestehende-skript-legacy-fix)
+4. [Live-Datenfluss & Synchronisation (Mobile & Desktop)](#live-datenfluss--synchronisation-mobile--desktop)
+5. [Installation & Deployment](#installation--deployment)
+6. [Konfiguration der Wetterstation (IDs aus dem System)](#konfiguration-der-wetterstation-ids-aus-dem-system)
+7. [Detailansicht & Vollbildmodus](#detailansicht--vollbildmodus)
+8. [Sofort-Hilfe für das alte Skript (Legacy-Fix)](#sofort-hilfe-für-das-alte-skript-legacy-fix)
 
 ---
 
@@ -33,7 +35,7 @@ IPS-Tile-Visu/
 │   ├── form.json
 │   ├── locale.json
 │   └── README.md
-├── WeatherStationTile/       <-- Dediziertes Wetterstations-Modul (flackerfrei)
+├── WeatherStationTile/       <-- Dediziertes Wetterstations-Modul (flackerfrei, responsive)
 │   ├── module.json
 │   ├── module.php
 │   ├── module.html
@@ -45,25 +47,28 @@ IPS-Tile-Visu/
 ```
 
 ### 1. `TileTemplate`
-Ein sauberes, schlankes Entwickler-Template zur Erstellung beliebiger eigener Kacheln mit dem IP-Symcon 7.1+ HTML-SDK:
+Ein sauberes, schlankes Entwickler-Starterkit zur Erstellung beliebiger eigener Kacheln mit dem IP-Symcon HTML-SDK:
 - `$this->SetVisualizationType(1)` aktiviert natives HTML-Rendering.
 - CSS Container Queries (`@container`), Dark/Light-Mode und flüssige Animationen.
-- Bidirektionale Interaktion über `requestAction()` in JavaScript und `RequestAction()` in PHP.
+- Bidirektionale Interaktion über `requestAction(ident, val)` in JavaScript und `RequestAction()` in PHP.
+- Robuster Nachrichten-Empfang für geparste Objekte und JSON-Strings.
 
 ### 2. `WeatherStationTile`
-Speziell für Wetterstationen (TFA WeatherHub, Netatmo, Davis etc.) entwickelte Kachel:
+Speziell für Wetterstationen (TFA Dostmann, WeatherHub, Netatmo, Davis Instruments etc.) optimierte Kachel:
 - **Flackerfreie Vektor-Windrose (SVG)**: Hardware-beschleunigte 60-FPS Drehung der Windnadel mit automatischer Kürzester-Weg-Berechnung (keine 350°-Rückwärtsdreher über Nord!).
 - **Geisterzeiger**: Zeigt die vorherige Windrichtung dezent an, um Drehungen sofort zu erkennen.
 - **Einheiten-Wahl**: Frei konfigurierbar in km/h, m/s oder Knoten.
-- **Beaufort-Skala**: Automatische Berechnung (0–12 Bft) mit deutscher Klartext-Bezeichnung (z. B. *Frische Brise*).
-- **Zwei Temperaturzonen**: Außentemperatur (z. B. Wärmepumpen-Fühler) groß im Fokus + Stall-/Zusatztemperatur.
-- **Status-Badges**: Automatische Warnanzeigen für Regen/Trockenheit und Batteriezustand.
+- **Beaufort-Skala**: Automatische Berechnung (0–12 Bft) mit deutscher Klartext-Bezeichnung (z. B. *Windstille*, *Frische Brise*).
+- **Zwei Temperaturzonen**: Außentemperatur (z. B. Wärmepumpen-Fühler) groß im Fokus + Stall-/Zusatztemperatur stabil verankert.
+- **Böen-Warnung**: Bernstein-Akzent (`#F59E0B`), sobald Böen über 0 km/h gemessen werden.
+- **Regen-Badge**: Automatische Einblendung bei Regen; eingeklappt bei trockenem Wetter.
+- **Transparente Farbanpassung**: Nahtlose Verschmelzung mit der Hintergrundfarbe nativer Symcon-Kacheln (`#333438`).
 
 ---
 
 ## Problemanalyse: Warum flackert die bisherige Visualisierung?
 
-Auf deinem Unraid-Server `unserver` läuft die Visualisierung bisher über das Skript **`34621.ips.php`**, welches den gesamten HTML/CSS/SVG-Code in die Variable **`31737`** (`Windrose`, Typ `String` mit Profil `~HTMLBox`) schreibt:
+Auf dem Unraid-Server `unserver` lief die Visualisierung bisher über das Skript **`34621.ips.php`**, welches den gesamten HTML/CSS/SVG-Code als String in die Variable **`31737`** (`Windrose`, Typ `String` mit Profil `~HTMLBox`) geschrieben hat:
 
 ```mermaid
 flowchart TD
@@ -79,15 +84,15 @@ flowchart TD
 1. **DOM-Zerstörung bei jedem Aufruf:**
    Wird eine `~HTMLBox`-Variable per `SetValueString()` beschrieben, löscht das Frontend von IP-Symcon das bestehende DOM-Element und erzeugt es neu. Der Browser muss Stylesheet, Layout und SVG jedes Mal komplett neu berechnen.
 2. **Abbruch von CSS-Transitions:**
-   In `34621.ips.php` ist eine CSS-Transition hinterlegt (`transition: transform 0.6s`). Da das `<g>`-Element bei jedem Update gelöscht und mit dem neuen Winkel neu gerendert wird, kann der Browser keine weiche Drehung animieren — die Nadel "springt" oder zuckt.
+   In `34621.ips.php` war eine CSS-Transition hinterlegt (`transition: transform 0.6s`). Da das `<g>`-Element bei jedem Update gelöscht und mit dem neuen Winkel neu gerendert wurde, konnte der Browser keine weiche Drehung animieren — die Nadel sprang unruhig.
 3. **Ereignis-Typ "Bei Aktualisierung":**
-   Drei der fünf Ereignisse (`37511` Außentemperatur, `27605` Stalltemperatur, `50140` Böe) standen auf *"Bei Aktualisierung"*. Das bedeutet: Jedes Mal, wenn ein Funkpaket empfangen wird (selbst wenn die Temperatur exakt identisch ist), läuft das Skript und erzwingt einen Neurender.
+   Drei der fünf Ereignisse (`37511` Außentemperatur, `27605` Stalltemperatur, `50140` Böe) standen auf *"Bei Aktualisierung"*. Das bedeutet: Jedes Mal, wenn ein Funkpaket empfangen wurde (selbst wenn die Temperatur identisch war), lief das Skript und erzwang einen Neurender.
 
 ---
 
 ## Die Lösung: Das IP-Symcon HTML-SDK
 
-Im neuen Modul `WeatherStationTile` wird das native **HTML-SDK** von IP-Symcon 7.1+ eingesetzt:
+Im Modul `WeatherStationTile` wird das native **HTML-SDK** von IP-Symcon eingesetzt:
 
 ```mermaid
 sequenceDiagram
@@ -99,31 +104,71 @@ sequenceDiagram
     Note over DOM: module.html lädt EINMALIG (persistentes DOM)
     S->>IPS: Variable aktualisiert (VM_UPDATE)
     IPS->>IPS: Berechnet Windrose, Beaufort & Delta
-    IPS->>DOM: UpdateVisualizationValue(JSON)
-    DOM->>DOM: handleMessage(data) rotiert Nadel & aktualisiert Text
+    IPS->>DOM: UpdateVisualizationValue(JSON-String)
+    DOM->>DOM: handleMessage(data) parst JSON & mutiert gezielt Nodes
     Note over DOM: 100% flackerfrei, 60 FPS Drehung, kein DOM-Neubau!
 ```
 
 ---
 
-## Installation in IP-Symcon
+## Live-Datenfluss & Synchronisation (Mobile & Desktop)
 
-### Weg A: Über lokales Gitea (Empfohlen)
-1. Im IP-Symcon WebFront / Management Console auf `Modul-Control` gehen (`Kern-Instanzen` -> `Modules`).
-2. Auf **Hinzufügen** klicken und die URL eintragen:
-   ```text
-   git@gitea.local.lan:thomas/IPS-Tile-Visu.git
-   ```
-   *(Alternativ: `https://gitea.local.lan/thomas/IPS-Tile-Visu`)*
-3. Nach dem Laden in der Objektbaum-Ansicht auf **Instanz hinzufügen** klicken:
-   - Für die Wetterstation: Suche nach **"Weather Station Tile"** (oder *Wetterstation Kachel*).
-   - Für das Template: Suche nach **"Tile Template"**.
+Ein wichtiger Aspekt des IP-Symcon HTML-SDKs ist die Unterscheidung zwischen dem **initialen Laden** und **Live-Updates**:
+
+| Phase | Übertragungsweg | Datentyp in `handleMessage(data)` |
+|---|---|---|
+| **Initiales Laden** | Inline `<script>window.__INITIAL_DATA__ = {...};</script>` | Direktes **JavaScript-Objekt** |
+| **Live-Update (WebSocket)** | `$this->UpdateVisualizationValue(json_encode(...))` | **JSON-String** |
+
+### Warum fehlten zuvor Werte auf dem Desktop?
+Wird `handleMessage(data)` aufgerufen, muss zwingend geprüft werden, ob `data` ein String ist:
+```javascript
+function handleMessage(data) {
+    if (!data) return;
+
+    if (typeof data === 'string') {
+        try {
+            data = JSON.parse(data);
+        } catch (e) {
+            console.error('JSON parse error:', e);
+            return;
+        }
+    }
+    // Gezielte Mutation der Nodes
+}
+```
+Ohne diese Deserialisierung griff JavaScript bei Live-Pushes ins Leere (`data.secondaryTempFormatted` war `undefined`), wodurch Stalltemperatur, Böen und Beaufort fälschlicherweise ausgeblendet wurden. Durch die integrierte Deserialisierung bleiben Desktop und Mobile nun permanent synchron.
 
 ---
 
-## Konfiguration der Wetterstation (IDs aus Screenshot)
+## Installation & Deployment
 
-Trage in der Instanzkonfiguration der **Weather Station Tile** die folgenden IDs aus deinem System ein:
+### 1. In IP-Symcon einbinden
+1. In der IP-Symcon Verwaltungskonsole auf `Kern-Instanzen` -> `Modules` gehen.
+2. Auf **Hinzufügen** klicken und die URL eintragen:
+   ```text
+   https://gitea.local.lan/thomas/IPS-Tile-Visu.git
+   ```
+   *(oder von GitHub: `https://github.com/TtodaH/IPS-Tile-Visu.git`)*
+3. In der gewünschten Kategorie auf **Instanz hinzufügen** klicken und nach **"Weather Station Tile"** suchen.
+
+### 2. Git & CLI-Richtlinien (Server & Entwickler)
+* **Lokales Subnetz:** `192.168.10.0/24`.
+* **Symcon Server:** `unserver` (`192.168.10.9`), Modulpfad: `/mnt/user/ips/data/modules/IPS-Tile-Visu`.
+* **Keine Bestätigungs-Popups (macOS Keychain / SSH):**
+  - Für GitHub immer die `gh` CLI verwenden (`gh auth setup-git`).
+  - Für Gitea immer die `gt` CLI verwenden (`gt auth setup-git`).
+  - Beide Remotes nutzen sichere HTTPS-Helper ohne Passphrase-Abfragen:
+    ```bash
+    git push origin main    # Gitea
+    git push github main    # GitHub
+    ```
+
+---
+
+## Konfiguration der Wetterstation (IDs aus dem System)
+
+Trage in der Instanzkonfiguration der **Weather Station Tile** (Instanz-ID `29926`) die folgenden IDs deines Systems ein:
 
 | Parameter | ID | Name laut System |
 |---|---|---|
@@ -136,19 +181,33 @@ Trage in der Instanzkonfiguration der **Weather Station Tile** die folgenden IDs
 | **Regen-/Trockensensor** | `35022` | TFA2\Wetterstation\Aktuell trocken |
 | **Batteriestatus** | `15523` | TFA2\Wetterstation\Batterie |
 
-Sobald eingerichtet, bindest du die Modul-Instanz direkt in deine Kachel-Visualisierung ein. Die alte HTMLBox-Variable `31737` und das Aktualisierungsskript `34621` werden dann nicht mehr benötigt!
+---
+
+## Detailansicht & Vollbildmodus
+
+Das Modul pflegt unterhalb der Instanz automatisch native Statusvariablen (`MaintainVariable`):
+
+* **Außentemperatur** (`~Temperature`)
+* **Windgeschwindigkeit** (`~WindSpeed.ms`)
+* **Böe** (`~WindSpeed.ms`)
+* **Windrichtung** (`~WindDirection.Text`)
+* **Stall** (`~Temperature`)
+* **Regen** (`~Raining`)
+* **Batterie** (`~Battery.Reversed`)
+
+Beim Klick auf das native Vollbild-/Detail-Symbol (`⤢`) oben rechts an der Kachel öffnet IP-Symcon eine übersichtliche Detailseite mit allen Einzelwerten, Verlaufsgraphen und Status-Icons, inklusive des Batteriezustands.
 
 ---
 
-## Sofort-Hilfe für das bestehende Skript (Legacy-Fix)
+## Sofort-Hilfe für das alte Skript (Legacy-Fix)
 
-Falls du bis zur Umstellung auf das Modul das bisherige Skript `34621.ips.php` auf deinem Server `unserver` beruhigen möchtest:
+Falls das historische Skript `34621.ips.php` parallel als Rückfallebene beruhigt werden soll:
 
-1. **Ereignisse umstellen**: Ändere die Ereignisse `37511`, `27605` und `50140` in der IP-Symcon Konsole von *"Bei Aktualisierung"* auf *"Bei Änderung"*.
-2. **Anti-Flacker-Bremse im Skript**: Ersetze das `SetValueString($htmlID, $html);` am Ende von `34621.ips.php` durch:
+1. **Ereignisse umstellen**: Ändere die Ereignisse `37511`, `27605` und `50140` von *"Bei Aktualisierung"* auf *"Bei Änderung"*.
+2. **Anti-Flacker-Bremse im Skript**: Ersetze das `SetValueString($htmlID, $html);` durch:
    ```php
    if (GetValueString($htmlID) !== $html) {
        SetValueString($htmlID, $html);
    }
    ```
-   *(Eine vollständige, optimierte Version findest du unter [`scripts/34621_windrose_legacy_optimized.php`](file:///Users/thomas/projectsgit/PHP/IPS-Tile-Visu/scripts/34621_windrose_legacy_optimized.php))*
+   *(Vollständige Vorlage: [`scripts/34621_windrose_legacy_optimized.php`](file:///Users/thomas/projectsgit/PHP/IPS-Tile-Visu/scripts/34621_windrose_legacy_optimized.php))*
