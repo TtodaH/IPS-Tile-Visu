@@ -38,7 +38,7 @@ class GarageDoorTile extends IPSModule
         $this->RegisterPropertyInteger('ReachableVariable', 0);    // z.B. 30959 (Online-Status)
 
         // Zeiten & Parameter
-        $this->RegisterPropertyInteger('ImpulseDurationMs', 800);  // 800 ms Taster-Haltezeit
+        $this->RegisterPropertyInteger('ImpulseDurationMs', 400);  // 400 ms Taster-Haltezeit (Shelly 1)
         $this->RegisterPropertyInteger('TravelTimeOpenSec', 16);   // 16s Fahrzeit Öffnen
         $this->RegisterPropertyInteger('TravelTimeCloseSec', 16);  // 16s Fahrzeit Schließen
         $this->RegisterPropertyInteger('WarnOpenMinutes', 30);     // Warnung ab 30 Min. offen
@@ -69,6 +69,7 @@ class GarageDoorTile extends IPSModule
         $this->RegisterAttributeInteger('OpenedAtTimestamp', 0);
         $this->RegisterAttributeInteger('LastDirection', 1); // 1 = nach oben, -1 = nach unten
         $this->RegisterAttributeFloat('TargetPosition', -1.0); // -1 = kein aktives Zielfahren
+        $this->RegisterAttributeFloat('LastImpulseOffTime', 0.0);
     }
 
     public function Destroy(): void
@@ -272,6 +273,13 @@ class GarageDoorTile extends IPSModule
         $this->SetTimerInterval('TargetStop', 0);
         $this->WriteAttributeFloat('TargetPosition', -1.0);
 
+        // Schutz gegen Prellen/Doppelklick: Wenn das Relais gerade noch aktiv ist, ignorieren
+        $switchID = $this->ReadPropertyInteger('SwitchVariable');
+        if ($switchID > 0 && @IPS_VariableExists($switchID) && GetValueBoolean($switchID)) {
+            $this->SendDebug('TriggerDoor', 'Impuls läuft bereits, Klick ignoriert', 0);
+            return;
+        }
+
         if (!$this->PulseRelay()) {
             return;
         }
@@ -354,6 +362,13 @@ class GarageDoorTile extends IPSModule
             return;
         }
 
+        // Relais noch aktiv? Nicht starten, um Fehlschaltungen zu verhindern
+        $switchID = $this->ReadPropertyInteger('SwitchVariable');
+        if ($switchID > 0 && @IPS_VariableExists($switchID) && GetValueBoolean($switchID)) {
+            $this->SendDebug('MoveToPosition', 'Relais noch aktiv, Aktion verworfen', 0);
+            return;
+        }
+
         // Eventuell aktiven TargetStop-Timer zunächst resetten
         $this->SetTimerInterval('TargetStop', 0);
         $this->WriteAttributeFloat('TargetPosition', -1.0);
@@ -370,6 +385,9 @@ class GarageDoorTile extends IPSModule
 
         $openTime  = max(2.0, (float)$this->ReadPropertyInteger('TravelTimeOpenSec'));
         $closeTime = max(2.0, (float)$this->ReadPropertyInteger('TravelTimeCloseSec'));
+        $impulseMs = max(200, $this->ReadPropertyInteger('ImpulseDurationMs'));
+        // Mindestlaufzeit: Impulsdauer + 1000ms Pause (für zuverlässige Erkennung des 2. Impulses durch die Torsteuerung)
+        $minStopDelayMs = (int)($impulseMs + 1000);
         $now       = microtime(true);
 
         if ($currentState === self::STATE_CLOSED) {
@@ -388,7 +406,7 @@ class GarageDoorTile extends IPSModule
             $this->WriteAttributeInteger('OpenedAtTimestamp', time());
             $this->WriteAttributeFloat('TargetPosition', $targetPos);
 
-            $this->SetTimerInterval('TargetStop', max(600, $durationMs));
+            $this->SetTimerInterval('TargetStop', max($minStopDelayMs, $durationMs));
             $this->SetTimerInterval('TravelProgress', 250);
             $this->SetTimerInterval('OpenDurationTick', 60000);
         } elseif ($currentState === self::STATE_OPEN) {
@@ -406,7 +424,7 @@ class GarageDoorTile extends IPSModule
             $this->WriteAttributeInteger('LastDirection', -1);
             $this->WriteAttributeFloat('TargetPosition', $targetPos);
 
-            $this->SetTimerInterval('TargetStop', max(600, $durationMs));
+            $this->SetTimerInterval('TargetStop', max($minStopDelayMs, $durationMs));
             $this->SetTimerInterval('TravelProgress', 250);
         } elseif ($currentState === self::STATE_STOPPED) {
             // Im Stillstand (Zwischenposition)
@@ -434,7 +452,7 @@ class GarageDoorTile extends IPSModule
             $this->WriteAttributeInteger('LastDirection', $dir);
             $this->WriteAttributeFloat('TargetPosition', $targetPos);
 
-            $this->SetTimerInterval('TargetStop', max(600, $durationMs));
+            $this->SetTimerInterval('TargetStop', max($minStopDelayMs, $durationMs));
             $this->SetTimerInterval('TravelProgress', 250);
         }
 
@@ -447,6 +465,21 @@ class GarageDoorTile extends IPSModule
      */
     public function HandleTargetStop(): void
     {
+        $switchID = $this->ReadPropertyInteger('SwitchVariable');
+        $isRelayOn = ($switchID > 0 && @IPS_VariableExists($switchID)) ? GetValueBoolean($switchID) : false;
+
+        $lastOff = $this->ReadAttributeFloat('LastImpulseOffTime');
+        $now = microtime(true);
+        $minPauseSec = 0.8; // Mindestens 800 ms Pause zwischen Impulsen für saubere Entprellung
+
+        if ($isRelayOn || ($now - $lastOff < $minPauseSec)) {
+            // Relais ist noch aktiv oder die Pause zwischen den Impulsen ist noch zu kurz
+            $remainingMs = $isRelayOn ? 400 : (int)ceil(($minPauseSec - ($now - $lastOff)) * 1000);
+            $this->SetTimerInterval('TargetStop', max(150, $remainingMs));
+            $this->SendDebug('TargetStop', "Warte auf Relais/Pause: Reschedule um {$remainingMs} ms", 0);
+            return;
+        }
+
         $this->SetTimerInterval('TargetStop', 0);
         $targetPos = $this->ReadAttributeFloat('TargetPosition');
         $this->WriteAttributeFloat('TargetPosition', -1.0);
@@ -497,6 +530,7 @@ class GarageDoorTile extends IPSModule
             @RequestAction($switchID, false);
         }
         $this->SetValue('ImpulseActive', false);
+        $this->WriteAttributeFloat('LastImpulseOffTime', microtime(true));
         $this->SendTileUpdate();
     }
 
@@ -671,7 +705,7 @@ class GarageDoorTile extends IPSModule
             self::STATE_OPENING => ['key' => 'opening', 'text' => $this->Translate('Wird geöffnet...'), 'color' => '#38BDF8', 'btn' => $this->Translate('Tor stoppen')],
             self::STATE_OPEN    => ['key' => 'open',    'text' => $this->Translate('Offen'),           'color' => '#EF4444', 'btn' => $this->Translate('Tor schließen')],
             self::STATE_CLOSING => ['key' => 'closing', 'text' => $this->Translate('Wird geschlossen...'), 'color' => '#F59E0B', 'btn' => $this->Translate('Tor stoppen')],
-            default             => ['key' => 'stopped', 'text' => $this->Translate('Gestoppt'),         'color' => '#94A3B8', 'btn' => $this->Translate('Tor bewegen')]
+            default             => ['key' => 'stopped', 'text' => $this->Translate('Gestoppt'),         'color' => '#94A3B8', 'btn' => $pos > 0 ? $this->Translate('Tor schließen') : $this->Translate('Tor öffnen')]
         };
 
         // Offen-Dauer berechnen
