@@ -21,7 +21,7 @@
 
 ## 4. Bereitstellung & Verifikation
 
-- [ ] 4.1 Deployment auf `unserver` (`/mnt/user/ips/data/modules/IPS-Tile-Visu`) synchronisieren
-- [ ] 4.2 Neue Modul-Instanz in IP-Symcon erzeugen und Variablen zuordnen
-- [ ] 4.3 Kachel-Funktion im WebFront testen (Impuls, Animation, Laufzeit, Sensor-Kalibrierung)
-- [ ] 4.4 Dokumentation in `README.md` und `GarageDoorTile/README.md` erstellen und committen
+- [x] 4.1 Deployment auf `unserver` (`/mnt/user/ips/data/modules/IPS-Tile-Visu`) synchronisieren
+- [x] 4.2 Neue Modul-Instanz in IP-Symcon erzeugen und Variablen zuordnen
+- [x] 4.3 Kachel-Funktion im WebFront testen (Impuls, Animation, Laufzeit, Sensor-Kalibrierung)
+- [x] 4.4 Dokumentation in `README.md` und `GarageDoorTile/README.md` erstellen und committen
