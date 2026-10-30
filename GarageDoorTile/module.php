@@ -78,14 +78,6 @@ class GarageDoorTile extends IPSModule
 
     public function ApplyChanges(): void
     {
-        // 0. Fehlende Properties / Timer / Attribute nachregistrieren (falls Modul aktualisiert wurde)
-        $this->RegisterPropertyInteger('DefaultVentilationPosition', 15);
-        $this->RegisterPropertyBoolean('CustomPresetEnabled', true);
-        $this->RegisterPropertyString('CustomPresetLabel', 'Halb offen');
-        $this->RegisterPropertyInteger('CustomPresetPosition', 50);
-        $this->RegisterTimer('TargetStop', 0, 'GARDOOR_HandleTargetStop($_IPS[\'TARGET\']);');
-        $this->RegisterAttributeFloat('TargetPosition', -1.0);
-
         parent::ApplyChanges();
 
         $this->SetVisualizationType(1);
