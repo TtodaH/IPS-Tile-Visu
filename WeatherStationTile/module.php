@@ -248,7 +248,10 @@ class WeatherStationTile extends IPSModule
         }
         $rainID = $this->ReadPropertyInteger('RainVariable');
         if ($rainID > 0 && @IPS_VariableExists($rainID)) {
-            $this->SetValue('Rain', (bool)GetValue($rainID));
+            $rawRain = GetValueBoolean($rainID);
+            $varName = IPS_GetName($rainID);
+            $isRaining = (stripos($varName, 'trocken') !== false) ? !$rawRain : $rawRain;
+            $this->SetValue('Rain', $isRaining);
         }
         $batteryID = $this->ReadPropertyInteger('BatteryVariable');
         if ($batteryID > 0 && @IPS_VariableExists($batteryID)) {
@@ -331,57 +334,95 @@ class WeatherStationTile extends IPSModule
             $secTempFormatted = number_format($secTempVal, 1, ',', '.');
         }
 
-        // Regen-/Trocken-Status
+        // Status-Indikatoren
         $rainStatus = null; // 'dry', 'rain', null
         if ($rainID > 0 && @IPS_VariableExists($rainID)) {
-            $rainVal = GetValueBoolean($rainID);
-            // TFA Sensor "Aktuell trocken": True = trocken, False = nass/regen
-            $rainStatus = $rainVal ? 'dry' : 'rain';
+            $rawRain = GetValueBoolean($rainID);
+            $varName = IPS_GetName($rainID);
+            // TFA Sensor "Aktuell trocken": True = trocken (kein Regen), False = Regen
+            $isRaining = (stripos($varName, 'trocken') !== false) ? !$rawRain : $rawRain;
+            $rainStatus = $isRaining ? 'rain' : 'dry';
         }
 
         // Batteriestatus
         $batteryOk = true;
         if ($batteryID > 0 && @IPS_VariableExists($batteryID)) {
-            $batteryVal = GetValueBoolean($batteryID);
-            // True = Batterie in Ordnung
-            $batteryOk = $batteryVal;
+            $batteryOk = GetValueBoolean($batteryID);
         }
 
+        $unit = $this->ReadPropertyString('WindUnit');
+        $speedFormatted = match($unit) {
+            'ms'    => number_format($speedMS, 1, ',', '.'),
+            'kn'    => number_format($speedKN, 1, ',', '.'),
+            default => number_format($speedKMH, 1, ',', '.')
+        };
+        $speedUnitText = match($unit) {
+            'ms'    => 'm/s',
+            'kn'    => 'kn',
+            default => 'km/h'
+        };
+
+        $gustFormatted = match($unit) {
+            'ms'    => number_format($gustMS, 1, ',', '.'),
+            'kn'    => number_format($gustKN, 1, ',', '.'),
+            default => number_format($gustKMH, 1, ',', '.')
+        };
+
+        $needleColorHex = sprintf('#%06X', $this->ReadPropertyInteger('NeedleColor'));
+        $northColorHex  = sprintf('#%06X', $this->ReadPropertyInteger('NorthMarkerColor'));
+        $gustColorHex   = sprintf('#%06X', $this->ReadPropertyInteger('GustColor'));
+
         return [
-            // Metadaten & Konfiguration
-            'title'               => $this->ReadPropertyString('TileTitle'),
-            'windUnit'            => $this->ReadPropertyString('WindUnit'),
-            'showBeaufort'        => $this->ReadPropertyBoolean('ShowBeaufort'),
-            'showSecondaryTemp'   => $this->ReadPropertyBoolean('ShowSecondaryTemp'),
+            // Wind
+            'windDirection'       => round($degrees, 1),
+            'prevDirection'       => $prevDegrees !== null ? round($prevDegrees, 1) : null,
+            'cardinal'            => $shortDir,
+            'cardinalText'        => $longDir,
+            'windSpeed'           => $speedMS,
+            'windSpeedFormatted'  => $speedFormatted,
+            'windSpeedUnit'       => $speedUnitText,
+            'gust'                => $gustMS,
+            'gustFormatted'       => $gustFormatted,
+            'gustUnit'            => $speedUnitText,
+            'bft'                 => $beaufort,
+            'bftText'             => $beaufortName,
+
+            // Temperaturen
+            'outdoorTemp'         => $outdoorTempVal,
+            'outdoorTempFormatted'=> $outdoorTempFormatted,
+            'secondaryTemp'       => $secTempVal,
+            'secondaryTempFormatted' => $secTempFormatted,
             'secondaryTempLabel'  => $this->ReadPropertyString('SecondaryTempLabel'),
-            'showRainStatus'      => $this->ReadPropertyBoolean('ShowRainStatus'),
-            'showBatteryStatus'   => $this->ReadPropertyBoolean('ShowBatteryStatus'),
-            'showPreviousDirection' => $this->ReadPropertyBoolean('ShowPreviousDirection'),
 
-            // Farben (Hex)
-            'needleColor'         => sprintf('#%06X', $this->ReadPropertyInteger('NeedleColor')),
-            'northColor'          => sprintf('#%06X', $this->ReadPropertyInteger('NorthMarkerColor')),
-            'gustColor'           => sprintf('#%06X', $this->ReadPropertyInteger('GustColor')),
+            // Status
+            'rain'                => ($rainStatus === 'rain'),
+            'rainText'            => ($rainStatus === 'rain') ? 'Regen' : 'Trocken',
+            'battery'             => $batteryOk,
+            'batteryText'         => $batteryOk ? 'Batterie OK' : 'Batterie schwach',
 
-            // Winddaten
+            // Farben & Optionen
+            'colors' => [
+                'needle'       => $needleColorHex,
+                'needleBright' => '#14F1CD',
+                'north'        => $northColorHex,
+                'gust'         => $gustColorHex
+            ],
+            'options' => [
+                'showBeaufort'          => $this->ReadPropertyBoolean('ShowBeaufort'),
+                'showSecondaryTemp'     => $this->ReadPropertyBoolean('ShowSecondaryTemp'),
+                'showRainStatus'        => $this->ReadPropertyBoolean('ShowRainStatus'),
+                'showBatteryStatus'     => $this->ReadPropertyBoolean('ShowBatteryStatus'),
+                'showPreviousDirection' => $this->ReadPropertyBoolean('ShowPreviousDirection')
+            ],
+
+            // Legacy keys für Rückwärtskompatibilität
             'degrees'             => round($degrees, 1),
             'prevDegrees'         => $prevDegrees !== null ? round($prevDegrees, 1) : null,
             'cardinalShort'       => $shortDir,
             'cardinalLong'        => $longDir,
-            'speedMS'             => number_format($speedMS, 1, ',', '.'),
             'speedKMH'            => number_format($speedKMH, 1, ',', '.'),
-            'speedKN'             => number_format($speedKN, 1, ',', '.'),
-            'gustMS'              => number_format($gustMS, 1, ',', '.'),
+            'speedMS'             => number_format($speedMS, 1, ',', '.'),
             'gustKMH'             => number_format($gustKMH, 1, ',', '.'),
-            'gustActive'          => ($gustKMH > 0),
-            'beaufort'            => $beaufort,
-            'beaufortName'        => $beaufortName,
-
-            // Temperaturdaten
-            'outdoorTemp'         => $outdoorTempFormatted,
-            'secondaryTemp'       => $secTempFormatted,
-
-            // Status-Indikatoren
             'rainStatus'          => $rainStatus,
             'batteryOk'           => $batteryOk
         ];
