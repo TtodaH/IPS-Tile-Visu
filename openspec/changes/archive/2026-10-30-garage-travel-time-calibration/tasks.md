@@ -13,5 +13,5 @@
 
 ## 3. Deployment & Verification
 
-- [ ] 3.1 Commit and push changes to GitHub and Gitea, pull on `unserver`, reload module and apply changes on instance 23387
-- [ ] 3.2 Verify variable creation, property configuration, and simulation/readiness in IP-Symcon
+- [x] 3.1 Commit and push changes to GitHub and Gitea, pull on `unserver`, reload module and apply changes on instance 23387
+- [x] 3.2 Verify variable creation, property configuration, and simulation/readiness in IP-Symcon
