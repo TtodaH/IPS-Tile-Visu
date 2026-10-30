@@ -75,6 +75,30 @@
         },
         {
             "type": "ExpansionPanel",
+            "caption": "Push-Benachrichtigung bei offenem Tor",
+            "items": [
+                {
+                    "type": "CheckBox",
+                    "name": "EnablePushNotification",
+                    "caption": "Push-Benachrichtigung senden, wenn das Tor zu lange offen ist"
+                },
+                {
+                    "type": "SelectInstance",
+                    "name": "PushInstanceID",
+                    "caption": "Ziel-Visualisierung / WebFront (Optional, 0 = Automatisch ermitteln)"
+                },
+                {
+                    "type": "NumberSpinner",
+                    "name": "PushRepeatIntervalMinutes",
+                    "caption": "Wiederholungs-Intervall (0 = Nur einmal warnen)",
+                    "minimum": 0,
+                    "maximum": 120,
+                    "suffix": "Minuten"
+                }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
             "caption": "Presets & Positionen",
             "items": [
                 {

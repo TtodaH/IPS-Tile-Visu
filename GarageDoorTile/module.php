@@ -44,6 +44,11 @@ class GarageDoorTile extends IPSModule
         $this->RegisterPropertyBoolean('AutoCalibrateTravelTime', true); // Automatische Kalibrierung am Endlagensensor
         $this->RegisterPropertyInteger('WarnOpenMinutes', 30);     // Warnung ab 30 Min. offen
 
+        // Push-Benachrichtigung
+        $this->RegisterPropertyBoolean('EnablePushNotification', true);
+        $this->RegisterPropertyInteger('PushInstanceID', 0);              // 0 = Automatisch ermitteln
+        $this->RegisterPropertyInteger('PushRepeatIntervalMinutes', 15);  // 0 = nur einmalig, sonst alle X Minuten
+
         // Presets & Positionen
         $this->RegisterPropertyInteger('DefaultVentilationPosition', 15); // Standard-Lüftung 15%
         $this->RegisterPropertyBoolean('CustomPresetEnabled', true);
@@ -73,6 +78,7 @@ class GarageDoorTile extends IPSModule
         $this->RegisterAttributeFloat('LastImpulseOffTime', 0.0);
         $this->RegisterAttributeFloat('MeasuredCloseTimeSec', 0.0);
         $this->RegisterAttributeBoolean('IsFullCloseRun', false);
+        $this->RegisterAttributeInteger('LastPushSentTimestamp', 0);
     }
 
     public function Destroy(): void
@@ -639,9 +645,109 @@ class GarageDoorTile extends IPSModule
         if ($openedAt > 0) {
             $minutes = (int)floor((time() - $openedAt) / 60);
             $this->SetValue('OpenDuration', $minutes);
+
+            // Push-Benachrichtigung bei Überschreitung der Warnzeit prüfen
+            $this->CheckAndSendPushNotification($minutes);
+
             $this->SendTileUpdate();
         } else {
             $this->SetTimerInterval('OpenDurationTick', 0);
+        }
+    }
+
+    /**
+     * Sendet eine Push-Benachrichtigung über die konfigurierte oder automatisch ermittelte Visualisierungsinstanz
+     */
+    public function SendPushNotification(string $title, string $message): bool
+    {
+        $pushID = $this->ReadPropertyInteger('PushInstanceID');
+
+        // Falls keine spezifische Instanz gewählt ist: Automatisch ermitteln
+        if ($pushID <= 0 || !@IPS_InstanceExists($pushID)) {
+            // 1. Suche nach moderner Kachelvisualisierung (Tile Visualization)
+            $tileVisus = @IPS_GetInstanceListByModuleID('{B5B875BB-9B76-45FD-4E67-2607E45B3AC4}');
+            if (!empty($tileVisus)) {
+                $pushID = $tileVisus[0];
+            } else {
+                // 2. Suche nach klassischem WebFront
+                $wfcInsts = @IPS_GetInstanceListByModuleID('{3565B1F7-EB40-4610-983E-365A894C4D5B}');
+                if (!empty($wfcInsts)) {
+                    $pushID = $wfcInsts[0];
+                } else {
+                    // 3. Suche nach Notification Control
+                    $ncInsts = @IPS_GetInstanceListByModuleID('{D4B231D6-8141-4B9E-9B32-82DA3AEEAB78}');
+                    if (!empty($ncInsts)) {
+                        $pushID = $ncInsts[0];
+                    }
+                }
+            }
+        }
+
+        if ($pushID <= 0 || !@IPS_InstanceExists($pushID)) {
+            $this->SendDebug('PushNotification', 'Abbruch: Keine gültige Visualisierungs-/Push-Instanz gefunden.', 0);
+            return false;
+        }
+
+        $inst = @IPS_GetInstance($pushID);
+        $moduleID = $inst['ModuleInfo']['ModuleID'] ?? '';
+
+        try {
+            if ($moduleID === '{B5B875BB-9B76-45FD-4E67-2607E45B3AC4}' && function_exists('VISU_PostNotification')) {
+                // Moderne Kachel-Visualisierung (IP-Symcon 7+)
+                @VISU_PostNotification($pushID, $title, $message, 'Garage', $this->InstanceID);
+            } elseif ($moduleID === '{D4B231D6-8141-4B9E-9B32-82DA3AEEAB78}' && function_exists('NC_PushNotification')) {
+                // Notification Control
+                @NC_PushNotification($pushID, $title, $message, 'Alarm', $this->InstanceID);
+            } elseif (function_exists('WFC_PushNotification')) {
+                // Klassisches WebFront
+                @WFC_PushNotification($pushID, $title, $message, 'alarm', $this->InstanceID);
+            } elseif (function_exists('VISU_PostNotification')) {
+                @VISU_PostNotification($pushID, $title, $message, 'Garage', $this->InstanceID);
+            } else {
+                $this->SendDebug('PushNotification', 'Keine passende Push-Funktion verfügbar.', 0);
+                return false;
+            }
+            $this->SendDebug('PushNotification', "Push gesendet an Instanz {$pushID}: {$title} - {$message}", 0);
+            return true;
+        } catch (\Throwable $e) {
+            $this->SendDebug('PushNotification', 'Fehler beim Senden: ' . $e->getMessage(), 0);
+            return false;
+        }
+    }
+
+    /**
+     * Prüft, ob eine Push-Benachrichtigung wegen offener Garage gesendet werden muss
+     */
+    protected function CheckAndSendPushNotification(int $minutes): void
+    {
+        if (!$this->ReadPropertyBoolean('EnablePushNotification')) {
+            return;
+        }
+
+        $warnThreshold = (int)$this->ReadPropertyInteger('WarnOpenMinutes');
+        if ($warnThreshold <= 0 || $minutes < $warnThreshold) {
+            return;
+        }
+
+        $now = time();
+        $lastSent = (int)$this->ReadAttributeInteger('LastPushSentTimestamp');
+        $repeatMinutes = (int)$this->ReadPropertyInteger('PushRepeatIntervalMinutes');
+
+        $shouldSend = false;
+        if ($lastSent === 0) {
+            // Erstmalige Benachrichtigung
+            $shouldSend = true;
+        } elseif ($repeatMinutes > 0 && ($now - $lastSent) >= ($repeatMinutes * 60)) {
+            // Wiederholung nach konfiguriertem Intervall
+            $shouldSend = true;
+        }
+
+        if ($shouldSend) {
+            $title = $this->Translate('Garagentor steht noch offen!');
+            $text = sprintf($this->Translate('Das Garagentor ist seit %d Minuten geöffnet.'), $minutes);
+            if ($this->SendPushNotification($title, $text)) {
+                $this->WriteAttributeInteger('LastPushSentTimestamp', $now);
+            }
         }
     }
 
@@ -718,6 +824,7 @@ class GarageDoorTile extends IPSModule
             }
 
             $this->WriteAttributeBoolean('IsFullCloseRun', false);
+            $this->WriteAttributeInteger('LastPushSentTimestamp', 0);
             $this->SetTimerInterval('TargetStop', 0);
             $this->WriteAttributeFloat('TargetPosition', -1.0);
             $this->WriteAttributeInteger('DoorState', self::STATE_CLOSED);

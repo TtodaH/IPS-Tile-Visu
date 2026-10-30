@@ -44,7 +44,13 @@
             "Gerade geöffnet": "Gerade geöffnet",
             "Seit %d Min.": "Seit %d Min.",
             "Lüften %d%%": "Lüften %d%%",
-            "Preset %d%%": "Preset %d%%"
+            "Preset %d%%": "Preset %d%%",
+            "Push-Benachrichtigung bei offenem Tor": "Push-Benachrichtigung bei offenem Tor",
+            "Push-Benachrichtigung senden, wenn das Tor zu lange offen ist": "Push-Benachrichtigung senden, wenn das Tor zu lange offen ist",
+            "Ziel-Visualisierung / WebFront (Optional, 0 = Automatisch ermitteln)": "Ziel-Visualisierung / WebFront (Optional, 0 = Automatisch ermitteln)",
+            "Wiederholungs-Intervall (0 = Nur einmal warnen)": "Wiederholungs-Intervall (0 = Nur einmal warnen)",
+            "Garagentor steht noch offen!": "Garagentor steht noch offen!",
+            "Das Garagentor ist seit %d Minuten geöffnet.": "Das Garagentor ist seit %d Minuten geöffnet."
         },
         "en": {
             "Garagentor Kachel – Smarte Kachel-Visualisierung mit automatischer Taster-Simulation (Shelly 1), State-Machine & Laufzeitschätzung (HTML-SDK)": "Garage Door Tile – Smart tile visualization with automatic push-button pulse simulation (Shelly 1), state machine & travel time estimation (HTML-SDK)",
@@ -90,7 +96,13 @@
             "Gerade geöffnet": "Just opened",
             "Seit %d Min.": "Since %d min.",
             "Lüften %d%%": "Vent %d%%",
-            "Preset %d%%": "Preset %d%%"
+            "Preset %d%%": "Preset %d%%",
+            "Push-Benachrichtigung bei offenem Tor": "Push Notification on Open Door",
+            "Push-Benachrichtigung senden, wenn das Tor zu lange offen ist": "Send push notification when door remains open too long",
+            "Ziel-Visualisierung / WebFront (Optional, 0 = Automatisch ermitteln)": "Target Visualization / WebFront (Optional, 0 = Auto-detect)",
+            "Wiederholungs-Intervall (0 = Nur einmal warnen)": "Repeat interval (0 = Alert only once)",
+            "Garagentor steht noch offen!": "Garage door is still open!",
+            "Das Garagentor ist seit %d Minuten geöffnet.": "The garage door has been open for %d minutes."
         }
     }
 }
