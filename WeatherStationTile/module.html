@@ -497,6 +497,18 @@
         function handleMessage(data) {
             if (!data) return;
 
+            // IP-Symcon UpdateVisualizationValue übergibt die Daten als JSON-String
+            if (typeof data === 'string') {
+                try {
+                    data = JSON.parse(data);
+                } catch (e) {
+                    console.error('WeatherStationTile JSON.parse failed:', e);
+                    return;
+                }
+            }
+
+            if (!data || typeof data !== 'object') return;
+
             // 1. Farben & Optionen aktualisieren (falls im Datensatz)
             if (data.colors) {
                 if (data.colors.needle) {
@@ -520,8 +532,12 @@
             }
 
             // 2. Windrichtung & kontinuierliche Nadel-Rotation
-            if (typeof data.windDirection === 'number') {
-                currentVisualAngle = calculateContinuousRotation(data.windDirection, currentVisualAngle);
+            const dirVal = (typeof data.windDirection === 'number') 
+                ? data.windDirection 
+                : ((typeof data.degrees === 'number') ? data.degrees : null);
+
+            if (dirVal !== null) {
+                currentVisualAngle = calculateContinuousRotation(dirVal, currentVisualAngle);
                 const needle = document.getElementById('needleGroup');
                 if (needle) {
                     needle.style.transform = `rotate(${currentVisualAngle}deg)`;
@@ -531,25 +547,31 @@
             // Vorherige Windrichtung (Geisterzeiger)
             const ghostNeedle = document.getElementById('ghostNeedle');
             if (ghostNeedle) {
-                if (typeof data.prevDirection === 'number' && data.options?.showPreviousDirection) {
+                const prevVal = (typeof data.prevDirection === 'number') 
+                    ? data.prevDirection 
+                    : ((typeof data.prevDegrees === 'number') ? data.prevDegrees : null);
+
+                if (prevVal !== null && data.options?.showPreviousDirection) {
                     ghostNeedle.style.display = 'block';
-                    currentGhostVisualAngle = calculateContinuousRotation(data.prevDirection, currentGhostVisualAngle);
+                    currentGhostVisualAngle = calculateContinuousRotation(prevVal, currentGhostVisualAngle);
                     ghostNeedle.style.transform = `rotate(${currentGhostVisualAngle}deg)`;
                 } else {
                     ghostNeedle.style.display = 'none';
                 }
             }
 
-            // Himmelsrichtungs-Text
+            // Himmelsrichtungs-Text & Grad
             const shortDirEl = document.getElementById('shortDir');
             const cardinalSubEl = document.getElementById('cardinalSub');
-            if (shortDirEl && data.cardinal) {
-                shortDirEl.textContent = data.cardinal;
+            if (shortDirEl && (data.cardinal || data.cardinalShort)) {
+                shortDirEl.textContent = data.cardinal || data.cardinalShort;
             }
             if (cardinalSubEl) {
-                const deg = typeof data.windDirection === 'number' ? Math.round(data.windDirection) : 0;
-                const text = data.cardinalText || '';
-                cardinalSubEl.textContent = `(${deg}°) · ${text}`;
+                if (dirVal !== null) {
+                    const deg = Math.round(dirVal);
+                    const text = data.cardinalText || data.cardinalLong || '';
+                    cardinalSubEl.textContent = text ? `(${deg}°) · ${text}` : `(${deg}°)`;
+                }
             }
 
             // 3. Außentemperatur & Sekundärtemperatur (Stall/Wärmepumpe)
@@ -563,9 +585,16 @@
             const secLabelEl = document.getElementById('secondaryTempLabel');
 
             if (secTempWrap) {
-                if (data.options?.showSecondaryTemp && data.secondaryTempFormatted !== undefined) {
+                const showSec = (data.options && typeof data.options.showSecondaryTemp !== 'undefined')
+                    ? data.options.showSecondaryTemp
+                    : true;
+                const secVal = (data.secondaryTempFormatted !== undefined && data.secondaryTempFormatted !== null)
+                    ? data.secondaryTempFormatted
+                    : (data.secondaryTemp !== undefined ? String(data.secondaryTemp).replace('.', ',') : null);
+
+                if (showSec && secVal !== null) {
                     secTempWrap.style.display = 'inline-block';
-                    if (tempSecondaryEl) tempSecondaryEl.textContent = `${data.secondaryTempFormatted} °C`;
+                    if (tempSecondaryEl) tempSecondaryEl.textContent = `${secVal} °C`;
                     if (secLabelEl && data.secondaryTempLabel) secLabelEl.textContent = data.secondaryTempLabel;
                 } else {
                     secTempWrap.style.display = 'none';
@@ -582,9 +611,13 @@
             const gustWrap = document.getElementById('gustWrap');
             const gustValEl = document.getElementById('gustVal');
             if (gustWrap && gustValEl) {
-                if (data.gustFormatted && (data.gust > (data.windSpeed || 0))) {
+                const gustVal = (typeof data.gust === 'number')
+                    ? data.gust
+                    : (data.gustFormatted ? parseFloat(String(data.gustFormatted).replace(',', '.')) : 0);
+
+                if (data.gustFormatted && gustVal > 0) {
                     gustWrap.style.display = 'inline';
-                    const unit = data.gustUnit || 'km/h';
+                    const unit = data.gustUnit || data.windSpeedUnit || 'km/h';
                     gustValEl.textContent = `Böe ${data.gustFormatted} ${unit}`;
                 } else {
                     gustWrap.style.display = 'none';
@@ -593,9 +626,13 @@
 
             const bftValEl = document.getElementById('bftVal');
             if (bftValEl) {
-                if (data.options?.showBeaufort && data.bft !== undefined) {
+                const showBft = (data.options && typeof data.options.showBeaufort !== 'undefined')
+                    ? data.options.showBeaufort
+                    : true;
+                if (showBft && data.bft !== undefined && data.bft !== null) {
                     bftValEl.style.display = 'block';
-                    bftValEl.textContent = `${data.bft} Bft (${data.bftText || ''})`;
+                    const bftDesc = data.bftText ? ` (${data.bftText})` : '';
+                    bftValEl.textContent = `${data.bft} Bft${bftDesc}`;
                 } else {
                     bftValEl.style.display = 'none';
                 }
@@ -628,6 +665,14 @@
                     topBar.classList.add('empty');
                 }
             }
+        }
+
+        window.handleMessage = handleMessage;
+        window.updateVisual = handleMessage;
+
+        // Falls __INITIAL_DATA__ bereits gesetzt ist, sofort anwenden
+        if (typeof window.__INITIAL_DATA__ !== 'undefined') {
+            handleMessage(window.__INITIAL_DATA__);
         }
     </script>
 </body>
