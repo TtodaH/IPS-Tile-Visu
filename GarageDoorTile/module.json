@@ -1,0 +1,12 @@
+{
+    "id": "{6DE2E84B-140F-4084-BDC0-49B66835E38E}",
+    "name": "Garage Door Tile",
+    "type": 3,
+    "vendor": "Thomas Hellstern",
+    "aliases": ["Garagentor Kachel", "Garagentor-Kachel", "Garagentor Widget"],
+    "parentRequirements": [],
+    "childRequirements": [],
+    "implemented": [],
+    "prefix": "GARDOOR",
+    "url": "https://github.com/TtodaH/IPS-Tile-Visu"
+}

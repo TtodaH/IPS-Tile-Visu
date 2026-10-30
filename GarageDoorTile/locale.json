@@ -1,0 +1,26 @@
+{
+    "de": {
+        "Garage Door Tile": "Garagentor Kachel",
+        "Door state": "Torzustand",
+        "Position": "Position",
+        "Opening duration": "Offen seit",
+        "Operating impulse": "Taster-Impuls",
+        "Closed": "Geschlossen",
+        "Open": "Offen",
+        "Opening...": "Wird geöffnet...",
+        "Closing...": "Wird geschlossen...",
+        "Stopped": "Gestoppt"
+    },
+    "en": {
+        "Garage Door Tile": "Garage Door Tile",
+        "Door state": "Door state",
+        "Position": "Position",
+        "Opening duration": "Open since",
+        "Operating impulse": "Operating impulse",
+        "Closed": "Closed",
+        "Open": "Open",
+        "Opening...": "Opening...",
+        "Closing...": "Closing...",
+        "Stopped": "Stopped"
+    }
+}

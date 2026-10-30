@@ -1,0 +1,105 @@
+{
+    "elements": [
+        {
+            "type": "Label",
+            "caption": "Garagentor Kachel – Smarte Kachel-Visualisierung mit automatischer Taster-Simulation (Shelly 1), State-Machine & Laufzeitschätzung (HTML-SDK)"
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "Hardware & Sensoren",
+            "items": [
+                {
+                    "type": "SelectVariable",
+                    "name": "SwitchVariable",
+                    "caption": "Torantrieb Schalter/Relais (z.B. ID 44039 Shelly 1)"
+                },
+                {
+                    "type": "SelectVariable",
+                    "name": "SensorClosedVariable",
+                    "caption": "Endlagensensor geschlossen (z.B. ID 39824 Shelly Pro 4PM Input)"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "SensorInverted",
+                    "caption": "Sensorlogik invertieren (Standard: Nicht aktiv. False = Geschlossen, True = Offen)"
+                },
+                {
+                    "type": "SelectVariable",
+                    "name": "ReachableVariable",
+                    "caption": "Online-Status Aktor (z.B. ID 30959 'Erreichbar', optional)"
+                }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "Zeiten & Tasterimpuls-Steuerung",
+            "items": [
+                {
+                    "type": "NumberSpinner",
+                    "name": "ImpulseDurationMs",
+                    "caption": "Taster-Impulsdauer (Relais-Haltezeit)",
+                    "minimum": 200,
+                    "maximum": 3000,
+                    "suffix": "ms"
+                },
+                {
+                    "type": "NumberSpinner",
+                    "name": "TravelTimeOpenSec",
+                    "caption": "Fahrzeit für vollständiges Öffnen",
+                    "minimum": 5,
+                    "maximum": 90,
+                    "suffix": "s"
+                },
+                {
+                    "type": "NumberSpinner",
+                    "name": "TravelTimeCloseSec",
+                    "caption": "Fahrzeit für vollständiges Schließen",
+                    "minimum": 5,
+                    "maximum": 90,
+                    "suffix": "s"
+                },
+                {
+                    "type": "NumberSpinner",
+                    "name": "WarnOpenMinutes",
+                    "caption": "Warnung ab Öffnungsdauer (0 = Deaktiviert)",
+                    "minimum": 0,
+                    "maximum": 240,
+                    "suffix": "Minuten"
+                }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "Darstellung & Beschriftung",
+            "items": [
+                {
+                    "type": "ValidationTextBox",
+                    "name": "TileTitle",
+                    "caption": "Kacheltitel (z.B. 'Garagentor')"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "ShowPercentage",
+                    "caption": "Öffnungsgrad in Prozent (0–100%) anzeigen"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "ShowOpenDuration",
+                    "caption": "Offen-Dauer anzeigen (z.B. 'Offen seit 12 Min.')"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "ShowReachableBadge",
+                    "caption": "Offline-Warnung bei fehlender Aktor-Verbindung anzeigen"
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "type": "Button",
+            "caption": "Tor betätigen (Taster-Impuls senden)",
+            "onClick": "GARDOOR_TriggerDoor($id);"
+        }
+    ]
+}

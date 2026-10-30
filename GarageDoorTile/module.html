@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Garagentor Tile</title>
+    <script src="/icons.js" crossorigin="anonymous"></script>
+
+    <style>
+        :root {
+            --color-closed: #10B981;
+            --color-opening: #38BDF8;
+            --color-open: #EF4444;
+            --color-closing: #F59E0B;
+            --color-stopped: #94A3B8;
+            --color-offline: #64748B;
+            
+            --panel-slat-bg: linear-gradient(180deg, #374151 0%, #1F2937 100%);
+            --panel-slat-border: #4B5563;
+            --panel-slat-highlight: rgba(255, 255, 255, 0.12);
+            --garage-wall: #1E2026;
+            --garage-interior: #0F1117;
+            
+            --text-main: #F8FAFC;
+            --text-sub: #94A3B8;
+            --text-muted: #64748B;
+            
+            --btn-bg: rgba(255, 255, 255, 0.08);
+            --btn-border: rgba(255, 255, 255, 0.16);
+            --btn-hover: rgba(255, 255, 255, 0.15);
+            --btn-active: rgba(255, 255, 255, 0.25);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text-main);
+        }
+
+        .tile-wrapper {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        /* 1. Header */
+        .tile-header {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 22px;
+            flex: 0 0 auto;
+        }
+
+        .title-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tile-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            letter-spacing: 0.3px;
+        }
+
+        .offline-pill {
+            display: none;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 1.5px 6px;
+            border-radius: 6px;
+            background: rgba(239, 68, 68, 0.2);
+            color: #F87171;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2.5px 8px;
+            border-radius: 12px;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            color: var(--color-closed);
+            transition: all 0.3s ease;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: currentColor;
+            display: inline-block;
+        }
+
+        .pulsing .status-dot {
+            animation: pulse-glow 1.4s infinite ease-in-out;
+        }
+
+        @keyframes pulse-glow {
+            0% { transform: scale(0.9); opacity: 0.6; }
+            50% { transform: scale(1.3); opacity: 1; filter: drop-shadow(0 0 4px currentColor); }
+            100% { transform: scale(0.9); opacity: 0.6; }
+        }
+
+        /* 2. Visual Garage Center */
+        .garage-center {
+            flex: 1 1 auto;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-height: 0;
+            padding: 4px 0;
+        }
+
+        .garage-svg-wrap {
+            height: 100%;
+            max-height: 130px;
+            width: auto;
+            aspect-ratio: 180 / 120;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .garage-svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
+        }
+
+        /* Slats sliding animation */
+        #doorSlatsGroup {
+            transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.25, 1);
+        }
+
+        /* Arrow motion animations */
+        .motion-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 5;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        .motion-arrow-svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .motion-indicator.moving-up {
+            color: var(--color-opening);
+            border-color: rgba(56, 189, 248, 0.4);
+        }
+
+        .motion-indicator.moving-up .motion-arrow-svg {
+            animation: floatUp 1.1s infinite ease-in-out;
+        }
+
+        .motion-indicator.moving-down {
+            color: var(--color-closing);
+            border-color: rgba(245, 158, 11, 0.4);
+        }
+
+        .motion-indicator.moving-down .motion-arrow-svg {
+            animation: floatDown 1.1s infinite ease-in-out;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(5px); opacity: 0.3; }
+            50% { opacity: 1; }
+            100% { transform: translateY(-5px); opacity: 0.3; }
+        }
+
+        @keyframes floatDown {
+            0% { transform: translateY(-5px); opacity: 0.3; }
+            50% { opacity: 1; }
+            100% { transform: translateY(5px); opacity: 0.3; }
+        }
+
+        /* Position Badge Overlay */
+        .pos-badge {
+            position: absolute;
+            bottom: 6px;
+            right: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-main);
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 1.5px 6px;
+            border-radius: 6px;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            letter-spacing: 0.2px;
+        }
+
+        /* 3. Footer / Button & Meta Row */
+        .tile-footer {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            flex: 0 0 auto;
+        }
+
+        .action-button {
+            width: 100%;
+            max-width: 280px;
+            height: 38px;
+            border-radius: 8px;
+            border: 1px solid var(--btn-border);
+            background: var(--btn-bg);
+            color: var(--text-main);
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            outline: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-button:hover {
+            background: var(--btn-hover);
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .action-button:active {
+            transform: scale(0.97);
+            background: var(--btn-active);
+        }
+
+        .action-button.impulse-active {
+            animation: impulse-flash 0.8s ease-out;
+            border-color: #38BDF8 !important;
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+        }
+
+        @keyframes impulse-flash {
+            0% { background: rgba(56, 189, 248, 0.35); }
+            100% { background: var(--btn-bg); }
+        }
+
+        .btn-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .meta-row {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--text-sub);
+            min-height: 15px;
+            padding: 0 2px;
+        }
+
+        .open-duration {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: color 0.2s;
+        }
+
+        .open-duration.warning {
+            color: #F59E0B;
+            font-weight: 600;
+        }
+
+        .impulse-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            color: #38BDF8;
+            opacity: 0;
+            transition: opacity 0.25s;
+        }
+
+        .impulse-indicator.active {
+            opacity: 1;
+        }
+
+        .impulse-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #38BDF8;
+            box-shadow: 0 0 6px #38BDF8;
+        }
+    </style>
+</head>
+<body>
+    <div class="tile-wrapper">
+        <!-- Header: Titel & Status Badge -->
+        <div class="tile-header">
+            <div class="title-group">
+                <span class="tile-title" id="tileTitle">Garagentor</span>
+                <span class="offline-pill" id="offlinePill">Offline</span>
+            </div>
+            <div class="status-pill" id="statusPill">
+                <span class="status-dot"></span>
+                <span id="statusText">Geschlossen</span>
+            </div>
+        </div>
+
+        <!-- Center: Modernes SVG Sektionaltor -->
+        <div class="garage-center">
+            <div class="garage-svg-wrap">
+                <svg class="garage-svg" viewBox="0 0 180 120" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <!-- Clip-Pfad für den Torrahmen (damit hochfahrende Lamellen oben sauber abgeschnitten werden) -->
+                        <clipPath id="doorOpeningClip">
+                            <rect x="22" y="20" width="136" height="88" rx="2" />
+                        </clipPath>
+
+                        <!-- Farbverlauf Garagenwand -->
+                        <linearGradient id="wallGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#262830" />
+                            <stop offset="100%" stop-color="#1B1C22" />
+                        </linearGradient>
+
+                        <!-- Farbverlauf Torrahmen -->
+                        <linearGradient id="frameGrad" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stop-color="#3A3D46" />
+                            <stop offset="50%" stop-color="#4E525E" />
+                            <stop offset="100%" stop-color="#3A3D46" />
+                        </linearGradient>
+
+                        <!-- Farbverlauf Torinnenraum -->
+                        <linearGradient id="interiorGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#0A0C10" />
+                            <stop offset="100%" stop-color="#15171E" />
+                        </linearGradient>
+
+                        <!-- Farbverlauf Sektional-Lamelle -->
+                        <linearGradient id="slatGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#3E4450" />
+                            <stop offset="12%" stop-color="#333842" />
+                            <stop offset="88%" stop-color="#282C35" />
+                            <stop offset="100%" stop-color="#1E2127" />
+                        </linearGradient>
+                    </defs>
+
+                    <!-- Äußere Garage / Wand -->
+                    <rect x="8" y="8" width="164" height="104" rx="6" fill="url(#wallGrad)" stroke="#353942" stroke-width="1.5" />
+
+                    <!-- Sturz & Laibung (Torrahmen) -->
+                    <rect x="18" y="16" width="144" height="96" rx="4" fill="url(#frameGrad)" />
+
+                    <!-- Garagen-Innenraum (wird bei offenem Tor sichtbar) -->
+                    <rect x="22" y="20" width="136" height="88" rx="2" fill="url(#interiorGrad)" />
+
+                    <!-- Details im Innenraum: Bodenlinie & dezentes Scheinwerferlicht -->
+                    <line x1="22" y1="104" x2="158" y2="104" stroke="#252A34" stroke-width="2" />
+                    <!-- Deckenleuchte / Ambient-Glow im Garageninneren -->
+                    <ellipse cx="90" cy="22" rx="30" ry="4" fill="rgba(255, 235, 180, 0.15)" />
+
+                    <!-- Sektionaltor-Lamellen (innerhalb des Clip-Pfades) -->
+                    <g clip-path="url(#doorOpeningClip)">
+                        <g id="doorSlatsGroup" transform="translate(0, 0)">
+                            <!-- Lamelle 1 (Oberste) -->
+                            <rect x="23" y="21" width="134" height="20" rx="1.5" fill="url(#slatGrad)" stroke="#1A1C22" stroke-width="0.75" />
+                            <line x1="25" y1="22" x2="155" y2="22" stroke="rgba(255,255,255,0.15)" stroke-width="0.75" />
+                            <line x1="25" y1="31" x2="155" y2="31" stroke="#20232B" stroke-width="0.5" />
+
+                            <!-- Lamelle 2 -->
+                            <rect x="23" y="43" width="134" height="20" rx="1.5" fill="url(#slatGrad)" stroke="#1A1C22" stroke-width="0.75" />
+                            <line x1="25" y1="44" x2="155" y2="44" stroke="rgba(255,255,255,0.15)" stroke-width="0.75" />
+                            <line x1="25" y1="53" x2="155" y2="53" stroke="#20232B" stroke-width="0.5" />
+
+                            <!-- Lamelle 3 -->
+                            <rect x="23" y="65" width="134" height="20" rx="1.5" fill="url(#slatGrad)" stroke="#1A1C22" stroke-width="0.75" />
+                            <line x1="25" y1="66" x2="155" y2="66" stroke="rgba(255,255,255,0.15)" stroke-width="0.75" />
+                            <line x1="25" y1="75" x2="155" y2="75" stroke="#20232B" stroke-width="0.5" />
+
+                            <!-- Lamelle 4 (Unterste mit Gummidichtung) -->
+                            <rect x="23" y="87" width="134" height="21" rx="1.5" fill="url(#slatGrad)" stroke="#1A1C22" stroke-width="0.75" />
+                            <line x1="25" y1="88" x2="155" y2="88" stroke="rgba(255,255,255,0.15)" stroke-width="0.75" />
+                            <line x1="25" y1="97" x2="155" y2="97" stroke="#20232B" stroke-width="0.5" />
+                            <!-- Bodenabschlussdichtung -->
+                            <rect x="23" y="105" width="134" height="3" fill="#111215" />
+
+                            <!-- Beschläge / Scharniere an den Seiten -->
+                            <circle cx="28" cy="43" r="1.5" fill="#4B5563" />
+                            <circle cx="152" cy="43" r="1.5" fill="#4B5563" />
+                            <circle cx="28" cy="65" r="1.5" fill="#4B5563" />
+                            <circle cx="152" cy="65" r="1.5" fill="#4B5563" />
+                            <circle cx="28" cy="87" r="1.5" fill="#4B5563" />
+                            <circle cx="152" cy="87" r="1.5" fill="#4B5563" />
+                        </g>
+                    </g>
+
+                    <!-- Bodenschwelle vorne -->
+                    <rect x="18" y="108" width="144" height="4" fill="#31343C" stroke="#23252B" stroke-width="0.5" />
+                </svg>
+
+                <!-- Bewegungs-Pfeile Overlay -->
+                <div class="motion-indicator" id="motionIndicator">
+                    <svg class="motion-arrow-svg" id="motionSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline id="motionPolyline" points="18 15 12 9 6 15"></polyline>
+                    </svg>
+                </div>
+
+                <!-- Prozentanzeige Badge -->
+                <div class="pos-badge" id="posBadge">0 %</div>
+            </div>
+        </div>
+
+        <!-- Footer: Steuerungstaste & Infoleiste -->
+        <div class="tile-footer">
+            <button class="action-button" id="triggerBtn" onclick="handleDoorClick()">
+                <span class="btn-icon" id="btnIcon">⏏</span>
+                <span id="btnText">Tor bedienen</span>
+            </button>
+
+            <div class="meta-row">
+                <div class="open-duration" id="openDurationWrap">
+                    <span id="openDurationIcon">⏱</span>
+                    <span id="openDurationText"></span>
+                </div>
+                <div class="impulse-indicator" id="impulseIndicator">
+                    <span class="impulse-dot"></span>
+                    <span>Taster aktiv</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentDoorState = 'closed';
+
+        function handleDoorClick() {
+            const btn = document.getElementById('triggerBtn');
+            if (btn) {
+                btn.classList.add('impulse-active');
+                setTimeout(() => {
+                    btn.classList.remove('impulse-active');
+                }, 800);
+            }
+
+            // Aufruf der nativen IP-Symcon Aktion
+            if (typeof requestAction === 'function') {
+                requestAction('triggerDoor', true);
+            } else {
+                console.log("requestAction('triggerDoor', true) triggered (Web SDK Preview)");
+            }
+        }
+
+        function handleMessage(data) {
+            if (!data) return;
+
+            // Sicheres Parsen bei JSON-Strings aus WebSocket
+            if (typeof data === 'string') {
+                try {
+                    data = JSON.parse(data);
+                } catch (e) {
+                    console.error("Fehler beim Parsen der Visualisierungsdaten:", e, data);
+                    return;
+                }
+            }
+
+            // 1. Titel
+            const titleEl = document.getElementById('tileTitle');
+            if (titleEl && data.title) {
+                titleEl.textContent = data.title;
+            }
+
+            // 2. Online / Offline Status
+            const offlinePill = document.getElementById('offlinePill');
+            if (offlinePill) {
+                offlinePill.style.display = (data.isOnline === false && data.options?.showReachableBadge) ? 'inline-block' : 'none';
+            }
+
+            // 3. Status Pill & Farben
+            const statusPill = document.getElementById('statusPill');
+            const statusText = document.getElementById('statusText');
+            if (statusPill && statusText) {
+                statusText.textContent = data.stateText || 'Unbekannt';
+                const col = data.stateColor || '#10B981';
+                statusPill.style.color = col;
+                statusPill.style.borderColor = col + '55';
+                statusPill.style.backgroundColor = col + '22';
+
+                if (data.state === 'opening' || data.state === 'closing') {
+                    statusPill.classList.add('pulsing');
+                } else {
+                    statusPill.classList.remove('pulsing');
+                }
+            }
+
+            // 4. Torposition & Sektionaltor-Verschiebung
+            // Die Toröffnung im SVG ist 88px hoch.
+            // Bei 0% ist translateY(0), bei 100% ist translateY(-88px).
+            const pos = (typeof data.position === 'number') ? Math.max(0, Math.min(100, data.position)) : 0;
+            const slatsGroup = document.getElementById('doorSlatsGroup');
+            if (slatsGroup) {
+                const maxTravelPx = 88;
+                const offsetPx = (pos / 100) * maxTravelPx;
+                slatsGroup.setAttribute('transform', `translate(0, -${offsetPx.toFixed(1)})`);
+            }
+
+            // Prozent-Badge
+            const posBadge = document.getElementById('posBadge');
+            if (posBadge) {
+                if (data.options?.showPercentage !== false) {
+                    posBadge.style.display = 'block';
+                    posBadge.textContent = data.positionFormatted || `${Math.round(pos)} %`;
+                } else {
+                    posBadge.style.display = 'none';
+                }
+            }
+
+            // 5. Bewegungs-Pfeile
+            const motionWrap = document.getElementById('motionIndicator');
+            const motionPolyline = document.getElementById('motionPolyline');
+            if (motionWrap && motionPolyline) {
+                if (data.state === 'opening') {
+                    motionWrap.style.display = 'flex';
+                    motionWrap.className = 'motion-indicator moving-up';
+                    motionPolyline.setAttribute('points', '18 15 12 9 6 15'); // Chevron Up
+                } else if (data.state === 'closing') {
+                    motionWrap.style.display = 'flex';
+                    motionWrap.className = 'motion-indicator moving-down';
+                    motionPolyline.setAttribute('points', '6 9 12 15 18 9'); // Chevron Down
+                } else {
+                    motionWrap.style.display = 'none';
+                }
+            }
+
+            // 6. Action Button Text, Icon & State styling
+            const btnText = document.getElementById('btnText');
+            const btnIcon = document.getElementById('btnIcon');
+            const triggerBtn = document.getElementById('triggerBtn');
+            if (btnText) {
+                btnText.textContent = data.buttonText || 'Tor bedienen';
+            }
+            if (triggerBtn && data.stateColor) {
+                // Feine Umrandung passend zum Zustand
+                triggerBtn.style.borderColor = data.stateColor + '55';
+            }
+            if (btnIcon) {
+                if (data.state === 'closed') {
+                    btnIcon.textContent = '▲';
+                } else if (data.state === 'open') {
+                    btnIcon.textContent = '▼';
+                } else if (data.state === 'opening' || data.state === 'closing') {
+                    btnIcon.textContent = '⏹';
+                } else {
+                    btnIcon.textContent = '⏏';
+                }
+            }
+
+            // 7. Impuls-Indikator
+            const impulseInd = document.getElementById('impulseIndicator');
+            if (impulseInd) {
+                if (data.impulseActive) {
+                    impulseInd.classList.add('active');
+                } else {
+                    impulseInd.classList.remove('active');
+                }
+            }
+
+            // 8. Offen-Dauer
+            const openWrap = document.getElementById('openDurationWrap');
+            const openText = document.getElementById('openDurationText');
+            if (openWrap && openText) {
+                if (data.options?.showOpenDuration && data.openDurationText && data.state !== 'closed') {
+                    openWrap.style.display = 'flex';
+                    openText.textContent = data.openDurationText;
+                    if (data.isWarning) {
+                        openWrap.classList.add('warning');
+                    } else {
+                        openWrap.classList.remove('warning');
+                    }
+                } else {
+                    openWrap.style.display = 'none';
+                }
+            }
+
+            currentDoorState = data.state;
+        }
+
+        window.handleMessage = handleMessage;
+        window.updateVisual = handleMessage;
+
+        // Initiale Daten ausführen falls vom PHP-Backend eingebettet
+        if (typeof window.__INITIAL_DATA__ !== 'undefined') {
+            handleMessage(window.__INITIAL_DATA__);
+        }
+    </script>
+</body>
+</html>

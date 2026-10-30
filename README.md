@@ -42,6 +42,13 @@ IPS-Tile-Visu/
 │   ├── form.json
 │   ├── locale.json
 │   └── README.md
+├── GarageDoorTile/           <-- Smarte Garagentor-Kachel (Shelly 1 Tasterimpuls, SVG Sektionaltor)
+│   ├── module.json
+│   ├── module.php
+│   ├── module.html
+│   ├── form.json
+│   ├── locale.json
+│   └── README.md
 └── scripts/
     └── 34621_windrose_legacy_optimized.php  <-- Optimierter Legacy-Fix für unserver
 ```
@@ -63,6 +70,15 @@ Speziell für Wetterstationen (TFA Dostmann, WeatherHub, Netatmo, Davis Instrume
 - **Böen-Warnung**: Bernstein-Akzent (`#F59E0B`), sobald Böen über 0 km/h gemessen werden.
 - **Regen-Badge**: Automatische Einblendung bei Regen; eingeklappt bei trockenem Wetter.
 - **Transparente Farbanpassung**: Nahtlose Verschmelzung mit der Hintergrundfarbe nativer Symcon-Kacheln (`#333438`).
+
+### 3. `GarageDoorTile`
+Smarte Kachel-Visualisierung und Steuerung für Garagentore:
+- **Automatische Taster-Simulation (Shelly 1 / Plus 1)**: Löst das Problem, dass herkömmliche Schalter dauerhaft auf *Ein* verbleiben. Sendet einen sauberen Impuls (z.B. 800 ms) und setzt das Relais über einen non-blocking Modul-Timer wieder auf *Aus*.
+- **Dynamisches SVG-Sektionaltor**: Animierte Lamellen heben und senken sich proportional zum Öffnungsgrad (0–100%) und gewähren Einblick in das beleuchtete Garageninnere.
+- **1-Taster State-Machine**: Verwaltet die Fahrzyklen `Geschlossen` $\rightarrow$ `Wird geöffnet...` $\rightarrow$ `Gestoppt` $\rightarrow$ `Wird geschlossen...` $\rightarrow$ `Gestoppt` mit Live-Bewegungspfeilen.
+- **Endlagen-Kalibrierung**: Synchronisiert sich mit dem physischen Sensor (z.B. Magnetschalter an Shelly Pro 4PM) und setzt die Position bei `Geschlossen` sofort auf 0% zurück.
+- **Offen-Dauer & Warnung**: Zählt die Öffnungsdauer mit und warnt farblich bei lang offenstehendem Tor (z.B. > 30 Min.).
+- **Online-Status**: Erkennt den Erreichbarkeitsstatus des Aktors.
 
 ---
 
