@@ -57,32 +57,25 @@
             flex-direction: column;
             justify-content: space-between;
             align-items: center;
-            padding: 8px 12px;
+            padding: 6px 12px 6px 12px;
             box-sizing: border-box;
             position: relative;
         }
 
-        /* 1. Header */
-        .tile-header {
+        /* 1. Platzhalter für IP-Symcon Kachel-Header (Titel links & Vollbild-Icon rechts) */
+        .symcon-header-spacer {
             width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            min-height: 22px;
+            height: 20px;
             flex: 0 0 auto;
         }
 
-        .title-group {
+        .status-row {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 6px;
-        }
-
-        .tile-title {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-main);
-            letter-spacing: 0.3px;
+            margin-bottom: 3px;
+            flex: 0 0 auto;
         }
 
         .offline-pill {
@@ -103,7 +96,7 @@
             gap: 5px;
             font-size: 11px;
             font-weight: 600;
-            padding: 2.5px 8px;
+            padding: 2px 8px;
             border-radius: 12px;
             background: rgba(16, 185, 129, 0.15);
             border: 1px solid rgba(16, 185, 129, 0.35);
@@ -138,12 +131,12 @@
             justify-content: center;
             position: relative;
             min-height: 0;
-            padding: 4px 0;
+            padding: 2px 0;
         }
 
         .garage-svg-wrap {
             height: 100%;
-            max-height: 130px;
+            max-height: 118px;
             width: auto;
             aspect-ratio: 180 / 120;
             display: flex;
@@ -342,19 +335,10 @@
 </head>
 <body>
     <div class="tile-wrapper">
-        <!-- Header: Titel & Status Badge -->
-        <div class="tile-header">
-            <div class="title-group">
-                <span class="tile-title" id="tileTitle">Garagentor</span>
-                <span class="offline-pill" id="offlinePill">Offline</span>
-            </div>
-            <div class="status-pill" id="statusPill">
-                <span class="status-dot"></span>
-                <span id="statusText">Geschlossen</span>
-            </div>
-        </div>
+        <!-- 1. Platzhalter für IP-Symcon Titel & Expand-Icon -->
+        <div class="symcon-header-spacer"></div>
 
-        <!-- Center: Modernes SVG Sektionaltor -->
+        <!-- 2. Center: Modernes SVG Sektionaltor -->
         <div class="garage-center">
             <div class="garage-svg-wrap">
                 <svg class="garage-svg" viewBox="0 0 180 120" xmlns="http://www.w3.org/2000/svg">
@@ -457,8 +441,16 @@
             </div>
         </div>
 
-        <!-- Footer: Steuerungstaste & Infoleiste -->
+        <!-- 3. Footer: Status-Pill, Steuerungstaste & Infoleiste -->
         <div class="tile-footer">
+            <div class="status-row">
+                <span class="offline-pill" id="offlinePill">Offline</span>
+                <div class="status-pill" id="statusPill">
+                    <span class="status-dot"></span>
+                    <span id="statusText">Geschlossen</span>
+                </div>
+            </div>
+
             <button class="action-button" id="triggerBtn" onclick="handleDoorClick()">
                 <span class="btn-icon" id="btnIcon">⏏</span>
                 <span id="btnText">Tor bedienen</span>
@@ -510,13 +502,7 @@
                 }
             }
 
-            // 1. Titel
-            const titleEl = document.getElementById('tileTitle');
-            if (titleEl && data.title) {
-                titleEl.textContent = data.title;
-            }
-
-            // 2. Online / Offline Status
+            // 1. Online / Offline Status
             const offlinePill = document.getElementById('offlinePill');
             if (offlinePill) {
                 offlinePill.style.display = (data.isOnline === false && data.options?.showReachableBadge) ? 'inline-block' : 'none';
