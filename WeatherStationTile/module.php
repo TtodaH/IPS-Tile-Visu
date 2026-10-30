@@ -208,10 +208,13 @@ class WeatherStationTile extends IPSModule
             $html = str_replace('id="bftVal"', 'id="bftVal" style="display:none;"', $html);
         }
 
-        $html = str_replace('>N<', '>' . $payload['cardinal'] . '<', $html);
-        $cardSub = '(' . round($payload['windDirection']) . '°) · ' . $payload['cardinalText'];
-        $html = str_replace('>(0°) · Nord<', '>' . $cardSub . '<', $html);
-        $html = str_replace('id="needleGroup" transform="rotate(0 60 60)"', 'id="needleGroup" transform="rotate(' . round($payload['windDirection'], 1) . ' 60 60)" style="transform: rotate(' . round($payload['windDirection'], 1) . 'deg);"', $html);
+        // Himmelsrichtung-Badge im Footer vorbefüllen (das statische "N" im Ziffernblatt bleibt unberührt!)
+        $html = str_replace('id="shortDir">N</span>', 'id="shortDir">' . htmlspecialchars($payload['cardinal']) . '</span>', $html);
+        $cardSub = '(' . round($payload['windDirection']) . '°) · ' . htmlspecialchars($payload['cardinalText']);
+        $html = str_replace('id="cardinalSub">(0°) · Nord</span>', 'id="cardinalSub">' . $cardSub . '</span>', $html);
+
+        $needleRot = round($payload['windDirection'], 1);
+        $html = str_replace('id="needleGroup" class="needle-transition"', 'id="needleGroup" class="needle-transition" style="transform: rotate(' . $needleRot . 'deg);"', $html);
 
         // 3. Initiales Datenpaket sofort beim ersten Laden der Kachel übergeben
         $initialData = json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
