@@ -16,7 +16,7 @@
             --text-primary: #F8FAFC;
             --text-secondary: #94A3B8;
             --text-muted: #64748B;
-            --card-surface: #181A20;
+            --card-surface: transparent;
             --divider-color: rgba(255, 255, 255, 0.08);
             --badge-bg: rgba(255, 255, 255, 0.06);
             --badge-border: rgba(255, 255, 255, 0.12);
@@ -36,12 +36,12 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
-            background: #181A20;
+            background: transparent;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             color: var(--text-primary);
         }
 
-        /* Hauptcontainer mit Flexbox: Alle Elemente garantiert sichtbar */
+        /* Hauptcontainer mit Flexbox: Nahtlose Anpassung an Standard-Kacheln */
         .wr-container {
             width: 100%;
             height: 100%;
@@ -52,7 +52,7 @@
             padding: 6px 12px;
             box-sizing: border-box;
             overflow: hidden;
-            background: #181A20;
+            background: transparent;
         }
 
         /* Status-Leiste oben (Batterie & Regen) */
@@ -100,7 +100,20 @@
             display: none !important;
         }
 
-        /* Hero-Bereich (Windrose): füllt flexibel den verfügbaren Platz aus */
+        /* Compass-Bereich (Windrose & Himmelsrichtung) */
+        .wr-compass-section {
+            flex: 1 1 0;
+            min-height: 0;
+            min-width: 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* Hero-Bereich (Windrose SVG): füllt flexibel den verfügbaren Platz aus */
         .wr-compass-hero {
             flex: 1 1 0;
             min-height: 0;
@@ -316,7 +329,7 @@
                 margin-bottom: 0;
             }
 
-            .wr-compass-hero {
+            .wr-compass-section {
                 flex: 0 0 45%;
                 max-width: 48%;
                 height: 100%;
@@ -354,75 +367,73 @@
 
     <div class="wr-container" id="weatherContainer">
 
-        <!-- Oben: Optionale Status-Pills (Regen/Trocken & Batterie) -->
+        <!-- Oben: Optionale Status-Pill (nur bei Regen) -->
         <div class="wr-top-bar empty" id="topBar">
             <div class="wr-status-pill hidden" id="rainPill">
-                <span id="rainIcon">☀️</span>
-                <span id="rainText">Trocken</span>
-            </div>
-            <div class="wr-status-pill hidden" id="batteryPill">
-                <span id="batteryIcon">🔋</span>
-                <span id="batteryText">Batterie OK</span>
+                <span id="rainIcon">🌧️</span>
+                <span id="rainText">Regen</span>
             </div>
         </div>
 
-        <!-- Mitte: Dynamische SVG Windrose mit dunklem Ziffernblatt -->
-        <div class="wr-compass-hero">
-            <svg class="wr-svg" viewBox="0 0 120 120">
-                <defs>
-                    <filter id="wr-shadow" x="-30%" y="-30%" width="160%" height="160%">
-                        <feDropShadow dx="0" dy="1.5" stdDeviation="2.5" flood-color="#000000" flood-opacity="0.6"/>
-                    </filter>
-                </defs>
+        <!-- Mitte: Dynamische SVG Windrose & Himmelsrichtung -->
+        <div class="wr-compass-section">
+            <div class="wr-compass-hero">
+                <svg class="wr-svg" viewBox="0 0 120 120">
+                    <defs>
+                        <filter id="wr-shadow" x="-30%" y="-30%" width="160%" height="160%">
+                            <feDropShadow dx="0" dy="1.5" stdDeviation="2.5" flood-color="#000000" flood-opacity="0.6"/>
+                        </filter>
+                    </defs>
 
-                <!-- Solides dunkles Ziffernblatt / Dial Background -->
-                <circle cx="60" cy="60" r="56" fill="#1F232B" stroke="rgba(255,255,255,0.15)" stroke-width="1.2" />
-                <circle cx="60" cy="60" r="53" fill="#171A20" stroke="rgba(0,0,0,0.5)" stroke-width="0.8" />
-                <circle cx="60" cy="60" r="44" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="0.8" stroke-dasharray="2,3" />
+                    <!-- Ziffernblatt / Dial Background passend zu Standard-Kacheln -->
+                    <circle cx="60" cy="60" r="56" fill="rgba(255, 255, 255, 0.04)" stroke="rgba(255,255,255,0.12)" stroke-width="1.2" />
+                    <circle cx="60" cy="60" r="53" fill="rgba(0, 0, 0, 0.12)" stroke="rgba(0,0,0,0.3)" stroke-width="0.8" />
+                    <circle cx="60" cy="60" r="44" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.8" stroke-dasharray="2,3" />
 
-                <!-- Haupt-Skalenstriche (N, O, S, W) -->
-                <line x1="60" y1="8" x2="60" y2="15" stroke="rgba(255,255,255,0.55)" stroke-width="1.5" stroke-linecap="round" />
-                <line x1="112" y1="60" x2="105" y2="60" stroke="rgba(255,255,255,0.55)" stroke-width="1.5" stroke-linecap="round" />
-                <line x1="60" y1="112" x2="60" y2="105" stroke="rgba(255,255,255,0.55)" stroke-width="1.5" stroke-linecap="round" />
-                <line x1="8" y1="60" x2="15" y2="60" stroke="rgba(255,255,255,0.55)" stroke-width="1.5" stroke-linecap="round" />
+                    <!-- Haupt-Skalenstriche (N, O, S, W) -->
+                    <line x1="60" y1="8" x2="60" y2="15" stroke="rgba(255,255,255,0.55)" stroke-width="1.5" stroke-linecap="round" />
+                    <line x1="112" y1="60" x2="105" y2="60" stroke="rgba(255,255,255,0.55)" stroke-width="1.5" stroke-linecap="round" />
+                    <line x1="60" y1="112" x2="60" y2="105" stroke="rgba(255,255,255,0.55)" stroke-width="1.5" stroke-linecap="round" />
+                    <line x1="8" y1="60" x2="15" y2="60" stroke="rgba(255,255,255,0.55)" stroke-width="1.5" stroke-linecap="round" />
 
-                <!-- Zwischen-Skalenstriche (NO, SO, SW, NW) -->
-                <line x1="60" y1="10" x2="60" y2="14" transform="rotate(45 60 60)" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-linecap="round" />
-                <line x1="60" y1="10" x2="60" y2="14" transform="rotate(135 60 60)" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-linecap="round" />
-                <line x1="60" y1="10" x2="60" y2="14" transform="rotate(225 60 60)" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-linecap="round" />
-                <line x1="60" y1="10" x2="60" y2="14" transform="rotate(315 60 60)" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-linecap="round" />
+                    <!-- Zwischen-Skalenstriche (NO, SO, SW, NW) -->
+                    <line x1="60" y1="10" x2="60" y2="14" transform="rotate(45 60 60)" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-linecap="round" />
+                    <line x1="60" y1="10" x2="60" y2="14" transform="rotate(135 60 60)" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-linecap="round" />
+                    <line x1="60" y1="10" x2="60" y2="14" transform="rotate(225 60 60)" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-linecap="round" />
+                    <line x1="60" y1="10" x2="60" y2="14" transform="rotate(315 60 60)" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-linecap="round" />
 
-                <!-- Himmelsrichtungs-Buchstaben -->
-                <text x="60" y="24" id="northLetter" fill="#F43F5E" font-size="12" font-weight="800" text-anchor="middle" dominant-baseline="central">N</text>
-                <text x="96" y="60" fill="#E2E8F0" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="central">O</text>
-                <text x="60" y="96" fill="#E2E8F0" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="central">S</text>
-                <text x="24" y="60" fill="#E2E8F0" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="central">W</text>
+                    <!-- Himmelsrichtungs-Buchstaben -->
+                    <text x="60" y="24" id="northLetter" fill="#F43F5E" font-size="12" font-weight="800" text-anchor="middle" dominant-baseline="central">N</text>
+                    <text x="96" y="60" fill="#E2E8F0" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="central">O</text>
+                    <text x="60" y="96" fill="#E2E8F0" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="central">S</text>
+                    <text x="24" y="60" fill="#E2E8F0" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="central">W</text>
 
-                <!-- Vorherige Windrichtung: Geisterzeiger (optional) -->
-                <g id="ghostNeedle" class="ghost-needle-transition" style="display:none;">
-                    <polygon points="60,32 57,60 60,56" fill="rgba(255,255,255,0.3)" />
-                    <polygon points="60,32 63,60 60,56" fill="rgba(255,255,255,0.4)" />
-                </g>
+                    <!-- Vorherige Windrichtung: Geisterzeiger (optional) -->
+                    <g id="ghostNeedle" class="ghost-needle-transition" style="display:none;">
+                        <polygon points="60,32 57,60 60,56" fill="rgba(255,255,255,0.3)" />
+                        <polygon points="60,32 63,60 60,56" fill="rgba(255,255,255,0.4)" />
+                    </g>
 
-                <!-- Haupt-Windnadel mit 60fps Hardware-Transformation -->
-                <g id="needleGroup" class="needle-transition" filter="url(#wr-shadow)">
-                    <!-- Pfeilspitze Norden/Windrichtung -->
-                    <polygon id="needleFrontLeft" points="60,28 56,60 60,54" fill="#00CDAB" />
-                    <polygon id="needleFrontRight" points="60,28 64,60 60,54" fill="#14F1CD" />
-                    <!-- Gegenfahne Süden -->
-                    <polygon points="60,92 56,60 60,66" fill="#475569" />
-                    <polygon points="60,92 64,60 60,66" fill="#64748B" />
-                    <!-- Drehachse / Mittelpunkt -->
-                    <circle cx="60" cy="60" r="4.5" fill="#0F172A" id="needleCenterRing" stroke="#00CDAB" stroke-width="1.5" />
-                    <circle cx="60" cy="60" r="1.5" fill="#FFFFFF" />
-                </g>
-            </svg>
-        </div>
+                    <!-- Haupt-Windnadel mit 60fps Hardware-Transformation -->
+                    <g id="needleGroup" class="needle-transition" filter="url(#wr-shadow)">
+                        <!-- Pfeilspitze Norden/Windrichtung -->
+                        <polygon id="needleFrontLeft" points="60,28 56,60 60,54" fill="#00CDAB" />
+                        <polygon id="needleFrontRight" points="60,28 64,60 60,54" fill="#14F1CD" />
+                        <!-- Gegenfahne Süden -->
+                        <polygon points="60,92 56,60 60,66" fill="#475569" />
+                        <polygon points="60,92 64,60 60,66" fill="#64748B" />
+                        <!-- Drehachse / Mittelpunkt -->
+                        <circle cx="60" cy="60" r="4.5" fill="#0F172A" id="needleCenterRing" stroke="#00CDAB" stroke-width="1.5" />
+                        <circle cx="60" cy="60" r="1.5" fill="#FFFFFF" />
+                    </g>
+                </svg>
+            </div>
 
-        <!-- Himmelsrichtung Label -->
-        <div class="wr-cardinal-badge">
-            <span id="shortDir">N</span>
-            <span class="wr-cardinal-sub" id="cardinalSub">(0°) · Nord</span>
+            <!-- Himmelsrichtung Label -->
+            <div class="wr-cardinal-badge">
+                <span id="shortDir">N</span>
+                <span class="wr-cardinal-sub" id="cardinalSub">(0°) · Nord</span>
+            </div>
         </div>
 
         <!-- Trennlinie -->
@@ -590,50 +601,23 @@
                 }
             }
 
-            // 5. Status-Pills (Regen & Batterie)
+            // 5. Status-Pills (Regenwarnung bei aktivem Regen)
             const topBar = document.getElementById('topBar');
             const rainPill = document.getElementById('rainPill');
             const rainIcon = document.getElementById('rainIcon');
             const rainText = document.getElementById('rainText');
-            const batteryPill = document.getElementById('batteryPill');
-            const batteryIcon = document.getElementById('batteryIcon');
-            const batteryText = document.getElementById('batteryText');
 
             let hasPill = false;
 
             if (rainPill) {
-                if (data.options?.showRainStatus && data.rain !== undefined) {
+                if (data.options?.showRainStatus && data.rain) {
                     rainPill.classList.remove('hidden');
-                    if (data.rain) {
-                        rainPill.classList.add('rain');
-                        if (rainIcon) rainIcon.textContent = '🌧️';
-                        if (rainText) rainText.textContent = data.rainText || 'Regen';
-                    } else {
-                        rainPill.classList.remove('rain');
-                        if (rainIcon) rainIcon.textContent = '☀️';
-                        if (rainText) rainText.textContent = data.rainText || 'Trocken';
-                    }
+                    rainPill.classList.add('rain');
+                    if (rainIcon) rainIcon.textContent = '🌧️';
+                    if (rainText) rainText.textContent = data.rainText || 'Regen';
                     hasPill = true;
                 } else {
                     rainPill.classList.add('hidden');
-                }
-            }
-
-            if (batteryPill) {
-                if (data.options?.showBatteryStatus && data.battery !== undefined) {
-                    batteryPill.classList.remove('hidden');
-                    if (data.battery) {
-                        batteryPill.classList.remove('battery-warn');
-                        if (batteryIcon) batteryIcon.textContent = '🔋';
-                        if (batteryText) batteryText.textContent = 'Batterie OK';
-                    } else {
-                        batteryPill.classList.add('battery-warn');
-                        if (batteryIcon) batteryIcon.textContent = '🪫';
-                        if (batteryText) batteryText.textContent = 'Batterie schwach';
-                    }
-                    hasPill = true;
-                } else {
-                    batteryPill.classList.add('hidden');
                 }
             }
 

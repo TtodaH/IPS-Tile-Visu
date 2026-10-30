@@ -92,7 +92,7 @@
                 {
                     "type": "CheckBox",
                     "name": "ShowBatteryStatus",
-                    "caption": "Batteriewarnung / Batteriestatus anzeigen"
+                    "caption": "Batteriewarnung auf Kachel anzeigen (Standard: Aus, nur Detailseite)"
                 },
                 {
                     "type": "CheckBox",

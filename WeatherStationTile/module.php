@@ -97,7 +97,7 @@ class WeatherStationTile extends IPSModule
         $this->RegisterPropertyBoolean('ShowSecondaryTemp', true);
         $this->RegisterPropertyString('SecondaryTempLabel', 'Stall');
         $this->RegisterPropertyBoolean('ShowRainStatus', true);
-        $this->RegisterPropertyBoolean('ShowBatteryStatus', true);
+        $this->RegisterPropertyBoolean('ShowBatteryStatus', false);
         $this->RegisterPropertyBoolean('ShowPreviousDirection', true);
 
         // Farbakzente
