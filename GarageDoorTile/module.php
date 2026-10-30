@@ -183,19 +183,19 @@ class GarageDoorTile extends IPSModule
         $payload = $this->GetTilePayload();
 
         // Frame-0 Vorbefüllung der HTML-Texte (Zero-Delay)
-        $ventLabel    = $payload['presets']['ventilation']['label'] ?? 'Lüften';
-        $customLabel  = $payload['presets']['custom']['label'] ?? 'Preset';
-        $btnText      = $payload['buttonText'] ?? 'Tor bedienen';
+        $ventLabel    = $payload['presets']['ventilation']['label'] ?? '15%';
+        $customLabel  = $payload['presets']['custom']['label'] ?? '50%';
+        $btnText      = $payload['buttonText'] ?? 'Öffnen';
         $stateText    = $payload['stateText'] ?? 'Geschlossen';
         $posFormatted = $payload['positionFormatted'] ?? '0 %';
 
         $html = str_replace(
             [
                 'id="statusText">Geschlossen</span>',
-                'id="btnText">Tor bedienen</span>',
+                'id="btnText">Öffnen</span>',
                 'id="posBadge">0 %</div>',
-                'id="presetVentLabel">Lüften 15%</span>',
-                'id="presetCustomLabel">Halb offen 50%</span>'
+                'id="presetVentLabel">15%</span>',
+                'id="presetCustomLabel">50%</span>'
             ],
             [
                 'id="statusText">' . htmlspecialchars($stateText) . '</span>',
@@ -882,11 +882,11 @@ class GarageDoorTile extends IPSModule
         $pos      = is_numeric($rawPos) ? round((float)$rawPos, 0) : 0.0;
 
         $stateInfo = match ($state) {
-            self::STATE_CLOSED  => ['key' => 'closed',  'text' => $this->Translate('Geschlossen'),     'color' => '#10B981', 'btn' => $this->Translate('Tor öffnen')],
-            self::STATE_OPENING => ['key' => 'opening', 'text' => $this->Translate('Wird geöffnet...'), 'color' => '#38BDF8', 'btn' => $this->Translate('Tor stoppen')],
-            self::STATE_OPEN    => ['key' => 'open',    'text' => $this->Translate('Offen'),           'color' => '#EF4444', 'btn' => $this->Translate('Tor schließen')],
-            self::STATE_CLOSING => ['key' => 'closing', 'text' => $this->Translate('Wird geschlossen...'), 'color' => '#F59E0B', 'btn' => $this->Translate('Tor stoppen')],
-            default             => ['key' => 'stopped', 'text' => $this->Translate('Gestoppt'),         'color' => '#94A3B8', 'btn' => $pos > 0 ? $this->Translate('Tor schließen') : $this->Translate('Tor öffnen')]
+            self::STATE_CLOSED  => ['key' => 'closed',  'text' => $this->Translate('Geschlossen'),     'color' => '#10B981', 'btn' => $this->Translate('Öffnen')],
+            self::STATE_OPENING => ['key' => 'opening', 'text' => $this->Translate('Wird geöffnet...'), 'color' => '#38BDF8', 'btn' => $this->Translate('Stopp')],
+            self::STATE_OPEN    => ['key' => 'open',    'text' => $this->Translate('Offen'),           'color' => '#EF4444', 'btn' => $this->Translate('Schließen')],
+            self::STATE_CLOSING => ['key' => 'closing', 'text' => $this->Translate('Wird geschlossen...'), 'color' => '#F59E0B', 'btn' => $this->Translate('Stopp')],
+            default             => ['key' => 'stopped', 'text' => $this->Translate('Gestoppt'),         'color' => '#94A3B8', 'btn' => $pos > 0 ? $this->Translate('Schließen') : $this->Translate('Öffnen')]
         };
 
         // Offen-Dauer berechnen
@@ -956,13 +956,15 @@ class GarageDoorTile extends IPSModule
             'presets'              => [
                 'ventilation' => [
                     'position' => $ventPos,
-                    'label'    => sprintf($this->Translate('Lüften %d%%'), $ventPos),
+                    'label'    => sprintf('%d%%', $ventPos),
+                    'title'    => sprintf($this->Translate('Lüften (%d%%)'), $ventPos),
                     'active'   => ($targetPos >= 0.0 && abs($targetPos - $ventPos) < 1.0)
                 ],
                 'custom' => [
                     'enabled'  => $customEnabled,
                     'position' => $customPos,
-                    'label'    => !empty($customLabel) ? sprintf('%s %d%%', $customLabel, $customPos) : sprintf($this->Translate('Preset %d%%'), $customPos),
+                    'label'    => sprintf('%d%%', $customPos),
+                    'title'    => !empty($customLabel) ? sprintf('%s (%d%%)', $customLabel, $customPos) : sprintf($this->Translate('Preset (%d%%)'), $customPos),
                     'active'   => ($targetPos >= 0.0 && abs($targetPos - $customPos) < 1.0)
                 ]
             ],

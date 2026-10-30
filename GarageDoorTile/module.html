@@ -65,16 +65,54 @@
         /* 1. Platzhalter für IP-Symcon Kachel-Header (Titel links & Vollbild-Icon rechts) */
         .symcon-header-spacer {
             width: 100%;
-            height: 20px;
+            height: 18px;
             flex: 0 0 auto;
+        }
+
+        /* 2. Side-by-Side Inhaltszeile */
+        .tile-content-row {
+            width: 100%;
+            flex: 1 1 auto;
+            min-height: 0;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            overflow: hidden;
+        }
+
+        /* Linke Spalte: Tor-Visualisierung */
+        .garage-col {
+            flex: 1 1 auto;
+            height: 100%;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* Rechte Spalte: Steuerungselemente */
+        .controls-col {
+            flex: 0 0 148px;
+            width: 148px;
+            max-width: 48%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 5px;
+            min-width: 0;
+            box-sizing: border-box;
         }
 
         .status-row {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            margin-bottom: 3px;
+            gap: 4px;
+            width: 100%;
             flex: 0 0 auto;
         }
 
@@ -123,21 +161,11 @@
         }
 
         /* 2. Visual Garage Center */
-        .garage-center {
-            flex: 1 1 auto;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            min-height: 0;
-            padding: 2px 0;
-        }
-
         .garage-svg-wrap {
             height: 100%;
-            max-height: 118px;
+            max-height: 114px;
             width: auto;
+            max-width: 100%;
             aspect-ratio: 180 / 120;
             display: flex;
             align-items: center;
@@ -229,34 +257,26 @@
         }
 
         /* 3. Footer / Button & Meta Row */
-        .tile-footer {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-            flex: 0 0 auto;
-        }
-
         .action-button {
             width: 100%;
-            max-width: 280px;
-            height: 38px;
+            height: 34px;
             border-radius: 8px;
             border: 1px solid var(--btn-border);
             background: var(--btn-bg);
             color: var(--text-main);
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             outline: none;
             position: relative;
             overflow: hidden;
+            padding: 0 6px;
+            flex: 0 0 auto;
         }
 
         .action-button:hover {
@@ -307,22 +327,22 @@
         /* Presets Row */
         .presets-row {
             width: 100%;
-            max-width: 280px;
             display: flex;
-            gap: 6px;
+            gap: 5px;
             justify-content: center;
+            flex: 0 0 auto;
         }
 
         .preset-btn {
             flex: 1 1 0;
             min-width: 0;
-            height: 28px;
+            height: 27px;
             border-radius: 6px;
             border: 1px solid rgba(255, 255, 255, 0.12);
             background: rgba(255, 255, 255, 0.05);
             color: var(--text-sub);
             font-size: 11px;
-            font-weight: 500;
+            font-weight: 600;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -330,10 +350,9 @@
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             outline: none;
-            padding: 0 6px;
+            padding: 0 4px;
             white-space: nowrap;
             overflow: hidden;
-            text-overflow: ellipsis;
         }
 
         .preset-btn:hover {
@@ -377,10 +396,26 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            font-size: 11px;
+            font-size: 10px;
             color: var(--text-sub);
-            min-height: 15px;
+            min-height: 14px;
             padding: 0 2px;
+            flex: 0 0 auto;
+        }
+
+        @media (max-width: 310px) {
+            .controls-col {
+                width: 130px;
+                gap: 4px;
+            }
+            .action-button {
+                height: 32px;
+                font-size: 11px;
+            }
+            .preset-btn {
+                height: 25px;
+                font-size: 10px;
+            }
         }
 
         .open-duration {
@@ -423,9 +458,11 @@
         <!-- 1. Platzhalter für IP-Symcon Titel & Expand-Icon -->
         <div class="symcon-header-spacer"></div>
 
-        <!-- 2. Center: Modernes SVG Sektionaltor -->
-        <div class="garage-center">
-            <div class="garage-svg-wrap">
+        <!-- 2. Hauptinhalt: 2-Spalten Layout (Tor links, Steuerung rechts) -->
+        <div class="tile-content-row">
+            <!-- Linke Spalte: Sektionaltor-Grafik -->
+            <div class="garage-col">
+<div class="garage-svg-wrap">
                 <svg class="garage-svg" viewBox="0 0 180 120" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                         <!-- Clip-Pfad für den Torrahmen (damit hochfahrende Lamellen oben sauber abgeschnitten werden) -->
@@ -524,57 +561,60 @@
                 <!-- Prozentanzeige Badge -->
                 <div class="pos-badge" id="posBadge">0 %</div>
             </div>
-        </div>
 
-        <!-- 3. Footer: Status-Pill, Steuerungstaste & Infoleiste -->
-        <div class="tile-footer">
-            <div class="status-row">
-                <span class="offline-pill" id="offlinePill">Offline</span>
-                <div class="status-pill" id="statusPill">
-                    <span class="status-dot"></span>
-                    <span id="statusText">Geschlossen</span>
+            <!-- Rechte Spalte: Steuerungselemente -->
+            <div class="controls-col">
+                <!-- Status Badge & Offline Pill -->
+                <div class="status-row">
+                    <span class="offline-pill" id="offlinePill">Offline</span>
+                    <div class="status-pill" id="statusPill">
+                        <span class="status-dot"></span>
+                        <span id="statusText">Geschlossen</span>
+                    </div>
                 </div>
-            </div>
 
-            <button class="action-button" id="triggerBtn" onclick="handleDoorClick()">
-                <svg class="btn-svg" id="btnSvg" viewBox="0 0 24 24" fill="currentColor">
-                    <path id="btnSvgPath" d="M12 5l7 7H5z"/>
-                </svg>
-                <span id="btnText">Tor bedienen</span>
-            </button>
-
-            <!-- Presets Row -->
-            <div class="presets-row" id="presetsRow">
-                <button class="preset-btn" id="presetVentBtn" onclick="handlePresetClick('ventilation')" title="In Lüftungsstellung fahren">
-                    <svg class="preset-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"></path>
+                <!-- Haupt-Bedientaste -->
+                <button class="action-button" id="triggerBtn" onclick="handleDoorClick()">
+                    <svg class="btn-svg" id="btnSvg" viewBox="0 0 24 24" fill="currentColor">
+                        <path id="btnSvgPath" d="M12 5l7 7H5z"/>
                     </svg>
-                    <span class="preset-label" id="presetVentLabel">Lüften 15%</span>
+                    <span id="btnText">Öffnen</span>
                 </button>
-                <button class="preset-btn" id="presetCustomBtn" onclick="handlePresetClick('custom')" title="Preset anfahren">
-                    <svg class="preset-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="4" y1="21" x2="4" y2="14"></line>
-                        <line x1="4" y1="10" x2="4" y2="3"></line>
-                        <line x1="12" y1="21" x2="12" y2="12"></line>
-                        <line x1="12" y1="8" x2="12" y2="3"></line>
-                        <line x1="20" y1="21" x2="20" y2="16"></line>
-                        <line x1="20" y1="12" x2="20" y2="3"></line>
-                        <line x1="1" y1="14" x2="7" y2="14"></line>
-                        <line x1="9" y1="8" x2="15" y2="8"></line>
-                        <line x1="17" y1="16" x2="23" y2="16"></line>
-                    </svg>
-                    <span class="preset-label" id="presetCustomLabel">Halb offen 50%</span>
-                </button>
-            </div>
 
-            <div class="meta-row">
-                <div class="open-duration" id="openDurationWrap">
-                    <span id="openDurationIcon">⏱</span>
-                    <span id="openDurationText"></span>
+                <!-- Presets Row (Lüften & Custom) -->
+                <div class="presets-row" id="presetsRow">
+                    <button class="preset-btn" id="presetVentBtn" onclick="handlePresetClick('ventilation')" title="In Lüftungsstellung fahren">
+                        <svg class="preset-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"></path>
+                        </svg>
+                        <span class="preset-label" id="presetVentLabel">15%</span>
+                    </button>
+                    <button class="preset-btn" id="presetCustomBtn" onclick="handlePresetClick('custom')" title="Preset anfahren">
+                        <svg class="preset-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="4" y1="21" x2="4" y2="14"></line>
+                            <line x1="4" y1="10" x2="4" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12" y2="3"></line>
+                            <line x1="20" y1="21" x2="20" y2="16"></line>
+                            <line x1="20" y1="12" x2="20" y2="3"></line>
+                            <line x1="1" y1="14" x2="7" y2="14"></line>
+                            <line x1="9" y1="8" x2="15" y2="8"></line>
+                            <line x1="17" y1="16" x2="23" y2="16"></line>
+                        </svg>
+                        <span class="preset-label" id="presetCustomLabel">50%</span>
+                    </button>
                 </div>
-                <div class="impulse-indicator" id="impulseIndicator">
-                    <span class="impulse-dot"></span>
-                    <span>Taster aktiv</span>
+
+                <!-- Meta-Zeile: Dauer & Taster-Aktivität -->
+                <div class="meta-row">
+                    <div class="open-duration" id="openDurationWrap" style="display: none;">
+                        <span id="openDurationIcon">⏱</span>
+                        <span id="openDurationText"></span>
+                    </div>
+                    <div class="impulse-indicator" id="impulseIndicator">
+                        <span class="impulse-dot"></span>
+                        <span>Impuls</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -700,7 +740,7 @@
             const btnSvgPath = document.getElementById('btnSvgPath');
             const triggerBtn = document.getElementById('triggerBtn');
             if (btnText) {
-                btnText.textContent = data.buttonText || 'Tor bedienen';
+                btnText.textContent = data.buttonText || 'Öffnen';
             }
             if (triggerBtn && data.stateColor) {
                 // Feine Umrandung passend zum Zustand
@@ -753,7 +793,10 @@
                 const customLabel = document.getElementById('presetCustomLabel');
 
                 if (ventBtn && ventLabel && data.presets.ventilation) {
-                    ventLabel.textContent = data.presets.ventilation.label || 'Lüften';
+                    ventLabel.textContent = data.presets.ventilation.label || '15%';
+                    if (data.presets.ventilation.title) {
+                        ventBtn.title = data.presets.ventilation.title;
+                    }
                     if (data.presets.ventilation.active) {
                         ventBtn.classList.add('active-target');
                     } else {
@@ -764,7 +807,10 @@
                 if (customBtn && customLabel && data.presets.custom) {
                     if (data.presets.custom.enabled !== false) {
                         customBtn.style.display = 'inline-flex';
-                        customLabel.textContent = data.presets.custom.label || 'Preset';
+                        customLabel.textContent = data.presets.custom.label || '50%';
+                        if (data.presets.custom.title) {
+                            customBtn.title = data.presets.custom.title;
+                        }
                         if (data.presets.custom.active) {
                             customBtn.classList.add('active-target');
                         } else {
