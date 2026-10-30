@@ -14,6 +14,6 @@
 
 ## 3. Deployment & Visual Verification
 
-- [ ] 3.1 Commit changes and deploy to IP-Symcon server via git
-- [ ] 3.2 Verify `VentilationPosition` variable in Symcon console and detail view
-- [ ] 3.3 Test target movement stopping logic and take live screenshots of tile UI
+- [x] 3.1 Commit changes and deploy to IP-Symcon server via git
+- [x] 3.2 Verify `VentilationPosition` variable in Symcon console and detail view
+- [x] 3.3 Test target movement stopping logic and take live screenshots of tile UI
