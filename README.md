@@ -157,6 +157,25 @@ Ohne diese Deserialisierung griff JavaScript bei Live-Pushes ins Leere (`data.se
 
 ---
 
+## Automatische Hell-/Dunkel-Theme-Unterstuetzung
+
+Alle Module erkennen das aktive IP-Symcon-Design automatisch am Kachel-Rahmen:
+IP-Symcon haengt beim Laden jeder HTML-Kachel die Parameter `cardcolor`, `textcolor`
+und `accentcolor` an die iframe-URL. Ein kleiner Bootstrap-Script im `<head>` liest
+die Kartenfarbe, berechnet deren relative Luminanz und setzt `data-theme="light|dark"`
+am `<html>`-Element - noch **vor** dem ersten Paint, also ohne Farb-Flackern.
+
+Dadurch passen sich unabhaengig voneinander an:
+
+- Text-, Badge- und Buttonfarben
+- SVG-Grafiken (Garagentor, Windrose, Kompassrose)
+- Statusfarben, die das PHP-Backend per JSON pusht (werden im hellen Theme abgedunkelt)
+
+> Hinweis: `prefers-color-scheme` beschreibt das Betriebssystem-Theme, **nicht** das
+> IP-Symcon-Design. Es wird nur als Fallback benutzt, wenn keine Theme-Parameter ankommen.
+
+---
+
 ## Installation & Deployment
 
 ### 1. In IP-Symcon einbinden

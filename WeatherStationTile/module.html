@@ -4,6 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Wetterstation Tile</title>
+    <!-- IP-Symcon Theme-Bootstrap: liest die vom Tile-Frame uebergebenen Theme-Farben
+         (cardcolor/textcolor/accentcolor) und setzt data-theme="light|dark" VOR dem ersten Paint. -->
+    <script>
+        (function () {
+            'use strict';
+            function parseHex(value) {
+                if (!value) { return null; }
+                var h = String(value).trim();
+                if (h.charAt(0) === '#') { h = h.substring(1); }
+                if (h.length === 3) {
+                    h = h.charAt(0) + h.charAt(0) + h.charAt(1) + h.charAt(1) + h.charAt(2) + h.charAt(2);
+                }
+                if (!/^[0-9a-f]{6}$/i.test(h)) { return null; }
+                return { r: parseInt(h.substring(0, 2), 16), g: parseInt(h.substring(2, 4), 16), b: parseInt(h.substring(4, 6), 16) };
+            }
+            function luminance(c) {
+                function channel(x) { x = x / 255; return (x <= 0.03928) ? (x / 12.92) : Math.pow((x + 0.055) / 1.055, 2.4); }
+                return 0.2126 * channel(c.r) + 0.7152 * channel(c.g) + 0.0722 * channel(c.b);
+            }
+            var params = new URLSearchParams(window.location.search);
+            var card = parseHex(params.get('cardcolor'));
+            var text = parseHex(params.get('textcolor'));
+            var accent = parseHex(params.get('accentcolor'));
+
+            var isLight = null;
+            if (card) { isLight = luminance(card) > 0.45; }
+            else if (text) { isLight = luminance(text) < 0.45; }
+            else if (window.matchMedia) { isLight = window.matchMedia('(prefers-color-scheme: light)').matches; }
+
+            var root = document.documentElement;
+            root.setAttribute('data-theme', isLight ? 'light' : 'dark');
+            if (card) { root.style.setProperty('--symcon-card', 'rgb(' + card.r + ',' + card.g + ',' + card.b + ')'); }
+            if (text) { root.style.setProperty('--symcon-text', 'rgb(' + text.r + ',' + text.g + ',' + text.b + ')'); }
+            if (accent) { root.style.setProperty('--symcon-accent', 'rgb(' + accent.r + ',' + accent.g + ',' + accent.b + ')'); }
+        })();
+    </script>
     <!-- IP-Symcon Icons / FontAwesome support -->
     <script src="/icons.js" crossorigin="anonymous"></script>
 
@@ -20,6 +56,64 @@
             --divider-color: rgba(255, 255, 255, 0.08);
             --badge-bg: rgba(255, 255, 255, 0.06);
             --badge-border: rgba(255, 255, 255, 0.12);
+            --accent-strong: #38BDF8;
+            --warn-strong: #F59E0B;
+
+            /* Windrosen-SVG (theme-abhaengig) */
+            --dial-bg: rgba(255, 255, 255, 0.04);
+            --dial-bg-inner: rgba(0, 0, 0, 0.12);
+            --dial-ring: rgba(255, 255, 255, 0.12);
+            --dial-ring-inner: rgba(0, 0, 0, 0.3);
+            --dial-ring-dashed: rgba(255, 255, 255, 0.06);
+            --dial-tick: rgba(255, 255, 255, 0.55);
+            --dial-tick-minor: rgba(255, 255, 255, 0.3);
+            --dial-letter: #E2E8F0;
+            --ghost-a: rgba(255, 255, 255, 0.3);
+            --ghost-b: rgba(255, 255, 255, 0.4);
+            --hub-fill: #0F172A;
+            --hub-center: #FFFFFF;
+            --needle-back-a: #475569;
+            --needle-back-b: #64748B;
+            --dial-shadow-color: #000000;
+            --dial-shadow-opacity: 0.6;
+        }
+
+        /* Helles IP-Symcon Theme */
+        :root[data-theme="light"] {
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --text-muted: #64748B;
+            --divider-color: rgba(15, 23, 42, 0.10);
+            --badge-bg: rgba(15, 23, 42, 0.05);
+            --badge-border: rgba(15, 23, 42, 0.12);
+            --accent-strong: #0284C7;
+            --warn-strong: #B45309;
+
+            --dial-bg: rgba(15, 23, 42, 0.035);
+            --dial-bg-inner: rgba(255, 255, 255, 0.6);
+            --dial-ring: rgba(15, 23, 42, 0.18);
+            --dial-ring-inner: rgba(15, 23, 42, 0.12);
+            --dial-ring-dashed: rgba(15, 23, 42, 0.10);
+            --dial-tick: rgba(15, 23, 42, 0.6);
+            --dial-tick-minor: rgba(15, 23, 42, 0.32);
+            --dial-letter: #334155;
+            --ghost-a: rgba(15, 23, 42, 0.28);
+            --ghost-b: rgba(15, 23, 42, 0.38);
+            --hub-fill: #FFFFFF;
+            --hub-center: #0F172A;
+            --needle-back-a: #94A3B8;
+            --needle-back-b: #64748B;
+            --dial-shadow-color: #0F172A;
+            --dial-shadow-opacity: 0.22;
+        }
+
+        :root[data-theme="light"] .wr-status-pill.rain {
+            background: rgba(2, 132, 199, 0.10);
+            border-color: rgba(2, 132, 199, 0.35);
+        }
+        :root[data-theme="light"] .wr-status-pill.battery-warn {
+            background: rgba(180, 83, 9, 0.10);
+            border-color: rgba(180, 83, 9, 0.35);
         }
 
         * {
@@ -87,13 +181,13 @@
         .wr-status-pill.rain {
             background: rgba(56, 189, 248, 0.15);
             border-color: rgba(56, 189, 248, 0.4);
-            color: #38BDF8;
+            color: var(--accent-strong);
         }
 
         .wr-status-pill.battery-warn {
             background: rgba(245, 158, 11, 0.15);
             border-color: rgba(245, 158, 11, 0.4);
-            color: #F59E0B;
+            color: var(--warn-strong);
         }
 
         .wr-status-pill.hidden {
@@ -250,7 +344,7 @@
         }
 
         .wr-speed-main {
-            color: #38BDF8;
+            color: var(--accent-strong);
             font-weight: 700;
         }
 
@@ -381,37 +475,37 @@
                 <svg class="wr-svg" viewBox="0 0 120 120">
                     <defs>
                         <filter id="wr-shadow" x="-30%" y="-30%" width="160%" height="160%">
-                            <feDropShadow dx="0" dy="1.5" stdDeviation="2.5" flood-color="#000000" flood-opacity="0.6"/>
+                            <feDropShadow dx="0" dy="1.5" stdDeviation="2.5" flood-color="var(--dial-shadow-color)" flood-opacity="var(--dial-shadow-opacity)"/>
                         </filter>
                     </defs>
 
                     <!-- Ziffernblatt / Dial Background passend zu Standard-Kacheln -->
-                    <circle cx="60" cy="60" r="56" fill="rgba(255, 255, 255, 0.04)" stroke="rgba(255,255,255,0.12)" stroke-width="1.2" />
-                    <circle cx="60" cy="60" r="53" fill="rgba(0, 0, 0, 0.12)" stroke="rgba(0,0,0,0.3)" stroke-width="0.8" />
-                    <circle cx="60" cy="60" r="44" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.8" stroke-dasharray="2,3" />
+                    <circle cx="60" cy="60" r="56" fill="var(--dial-bg)" stroke="var(--dial-ring)" stroke-width="1.2" />
+                    <circle cx="60" cy="60" r="53" fill="var(--dial-bg-inner)" stroke="var(--dial-ring-inner)" stroke-width="0.8" />
+                    <circle cx="60" cy="60" r="44" fill="none" stroke="var(--dial-ring-dashed)" stroke-width="0.8" stroke-dasharray="2,3" />
 
                     <!-- Haupt-Skalenstriche (N, O, S, W) -->
-                    <line x1="60" y1="8" x2="60" y2="15" stroke="rgba(255,255,255,0.55)" stroke-width="1.5" stroke-linecap="round" />
-                    <line x1="112" y1="60" x2="105" y2="60" stroke="rgba(255,255,255,0.55)" stroke-width="1.5" stroke-linecap="round" />
-                    <line x1="60" y1="112" x2="60" y2="105" stroke="rgba(255,255,255,0.55)" stroke-width="1.5" stroke-linecap="round" />
-                    <line x1="8" y1="60" x2="15" y2="60" stroke="rgba(255,255,255,0.55)" stroke-width="1.5" stroke-linecap="round" />
+                    <line x1="60" y1="8" x2="60" y2="15" stroke="var(--dial-tick)" stroke-width="1.5" stroke-linecap="round" />
+                    <line x1="112" y1="60" x2="105" y2="60" stroke="var(--dial-tick)" stroke-width="1.5" stroke-linecap="round" />
+                    <line x1="60" y1="112" x2="60" y2="105" stroke="var(--dial-tick)" stroke-width="1.5" stroke-linecap="round" />
+                    <line x1="8" y1="60" x2="15" y2="60" stroke="var(--dial-tick)" stroke-width="1.5" stroke-linecap="round" />
 
                     <!-- Zwischen-Skalenstriche (NO, SO, SW, NW) -->
-                    <line x1="60" y1="10" x2="60" y2="14" transform="rotate(45 60 60)" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-linecap="round" />
-                    <line x1="60" y1="10" x2="60" y2="14" transform="rotate(135 60 60)" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-linecap="round" />
-                    <line x1="60" y1="10" x2="60" y2="14" transform="rotate(225 60 60)" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-linecap="round" />
-                    <line x1="60" y1="10" x2="60" y2="14" transform="rotate(315 60 60)" stroke="rgba(255,255,255,0.3)" stroke-width="1" stroke-linecap="round" />
+                    <line x1="60" y1="10" x2="60" y2="14" transform="rotate(45 60 60)" stroke="var(--dial-tick-minor)" stroke-width="1" stroke-linecap="round" />
+                    <line x1="60" y1="10" x2="60" y2="14" transform="rotate(135 60 60)" stroke="var(--dial-tick-minor)" stroke-width="1" stroke-linecap="round" />
+                    <line x1="60" y1="10" x2="60" y2="14" transform="rotate(225 60 60)" stroke="var(--dial-tick-minor)" stroke-width="1" stroke-linecap="round" />
+                    <line x1="60" y1="10" x2="60" y2="14" transform="rotate(315 60 60)" stroke="var(--dial-tick-minor)" stroke-width="1" stroke-linecap="round" />
 
                     <!-- Himmelsrichtungs-Buchstaben -->
                     <text x="60" y="24" id="northLetter" fill="#F43F5E" font-size="12" font-weight="800" text-anchor="middle" dominant-baseline="central">N</text>
-                    <text x="96" y="60" fill="#E2E8F0" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="central">O</text>
-                    <text x="60" y="96" fill="#E2E8F0" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="central">S</text>
-                    <text x="24" y="60" fill="#E2E8F0" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="central">W</text>
+                    <text x="96" y="60" fill="var(--dial-letter)" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="central">O</text>
+                    <text x="60" y="96" fill="var(--dial-letter)" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="central">S</text>
+                    <text x="24" y="60" fill="var(--dial-letter)" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="central">W</text>
 
                     <!-- Vorherige Windrichtung: Geisterzeiger (optional) -->
                     <g id="ghostNeedle" class="ghost-needle-transition" style="display:none;">
-                        <polygon points="60,32 57,60 60,56" fill="rgba(255,255,255,0.3)" />
-                        <polygon points="60,32 63,60 60,56" fill="rgba(255,255,255,0.4)" />
+                        <polygon points="60,32 57,60 60,56" fill="var(--ghost-a)" />
+                        <polygon points="60,32 63,60 60,56" fill="var(--ghost-b)" />
                     </g>
 
                     <!-- Haupt-Windnadel mit 60fps Hardware-Transformation -->
@@ -420,11 +514,11 @@
                         <polygon id="needleFrontLeft" points="60,28 56,60 60,54" fill="#00CDAB" />
                         <polygon id="needleFrontRight" points="60,28 64,60 60,54" fill="#14F1CD" />
                         <!-- Gegenfahne Süden -->
-                        <polygon points="60,92 56,60 60,66" fill="#475569" />
-                        <polygon points="60,92 64,60 60,66" fill="#64748B" />
+                        <polygon points="60,92 56,60 60,66" fill="var(--needle-back-a)" />
+                        <polygon points="60,92 64,60 60,66" fill="var(--needle-back-b)" />
                         <!-- Drehachse / Mittelpunkt -->
-                        <circle cx="60" cy="60" r="4.5" fill="#0F172A" id="needleCenterRing" stroke="#00CDAB" stroke-width="1.5" />
-                        <circle cx="60" cy="60" r="1.5" fill="#FFFFFF" />
+                        <circle cx="60" cy="60" r="4.5" fill="var(--hub-fill)" id="needleCenterRing" stroke="#00CDAB" stroke-width="1.5" />
+                        <circle cx="60" cy="60" r="1.5" fill="var(--hub-center)" />
                     </g>
                 </svg>
             </div>
@@ -494,6 +588,26 @@
         /**
          * IP-Symcon HTML-SDK Callback für dynamische Updates.
          */
+        /**
+         * Dunkelt Statusfarben im hellen Theme ab, damit sie auf hellem
+         * Kachel-Hintergrund lesbar bleiben.
+         */
+        function themeColor(hex) {
+            if (document.documentElement.getAttribute('data-theme') !== 'light') {
+                return hex;
+            }
+            const match = /^#([0-9a-f]{6})$/i.exec(hex || '');
+            if (!match) {
+                return hex;
+            }
+            const n = parseInt(match[1], 16);
+            const factor = 0.68;
+            const r = Math.round(((n >> 16) & 255) * factor);
+            const g = Math.round(((n >> 8) & 255) * factor);
+            const b = Math.round((n & 255) * factor);
+            return '#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('');
+        }
+
         function handleMessage(data) {
             if (!data) return;
 
@@ -553,7 +667,7 @@
                 }
                 if (data.colors.gust) {
                     const elGust = document.getElementById('gustVal');
-                    if (elGust) elGust.style.color = data.colors.gust;
+                    if (elGust) elGust.style.color = themeColor(data.colors.gust);
                 }
             }
 

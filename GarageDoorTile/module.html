@@ -4,6 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Garagentor Tile</title>
+    <!-- IP-Symcon Theme-Bootstrap: liest die vom Tile-Frame uebergebenen Theme-Farben
+         (cardcolor/textcolor/accentcolor) und setzt data-theme="light|dark" VOR dem ersten Paint. -->
+    <script>
+        (function () {
+            'use strict';
+            function parseHex(value) {
+                if (!value) { return null; }
+                var h = String(value).trim();
+                if (h.charAt(0) === '#') { h = h.substring(1); }
+                if (h.length === 3) {
+                    h = h.charAt(0) + h.charAt(0) + h.charAt(1) + h.charAt(1) + h.charAt(2) + h.charAt(2);
+                }
+                if (!/^[0-9a-f]{6}$/i.test(h)) { return null; }
+                return { r: parseInt(h.substring(0, 2), 16), g: parseInt(h.substring(2, 4), 16), b: parseInt(h.substring(4, 6), 16) };
+            }
+            function luminance(c) {
+                function channel(x) { x = x / 255; return (x <= 0.03928) ? (x / 12.92) : Math.pow((x + 0.055) / 1.055, 2.4); }
+                return 0.2126 * channel(c.r) + 0.7152 * channel(c.g) + 0.0722 * channel(c.b);
+            }
+            var params = new URLSearchParams(window.location.search);
+            var card = parseHex(params.get('cardcolor'));
+            var text = parseHex(params.get('textcolor'));
+            var accent = parseHex(params.get('accentcolor'));
+
+            var isLight = null;
+            if (card) { isLight = luminance(card) > 0.45; }
+            else if (text) { isLight = luminance(text) < 0.45; }
+            else if (window.matchMedia) { isLight = window.matchMedia('(prefers-color-scheme: light)').matches; }
+
+            var root = document.documentElement;
+            root.setAttribute('data-theme', isLight ? 'light' : 'dark');
+            if (card) { root.style.setProperty('--symcon-card', 'rgb(' + card.r + ',' + card.g + ',' + card.b + ')'); }
+            if (text) { root.style.setProperty('--symcon-text', 'rgb(' + text.r + ',' + text.g + ',' + text.b + ')'); }
+            if (accent) { root.style.setProperty('--symcon-accent', 'rgb(' + accent.r + ',' + accent.g + ',' + accent.b + ')'); }
+        })();
+    </script>
     <script src="/icons.js" crossorigin="anonymous"></script>
 
     <style>
@@ -14,6 +50,9 @@
             --color-closing: #F59E0B;
             --color-stopped: #94A3B8;
             --color-offline: #64748B;
+            /* Akzent (wird vom Theme-Bootstrap auf die Symcon-Akzentfarbe gesetzt) */
+            --accent: #38BDF8;
+            --accent-strong: #38BDF8;
             
             --panel-slat-bg: linear-gradient(180deg, #374151 0%, #1F2937 100%);
             --panel-slat-border: #4B5563;
@@ -29,6 +68,117 @@
             --btn-border: rgba(255, 255, 255, 0.16);
             --btn-hover: rgba(255, 255, 255, 0.15);
             --btn-active: rgba(255, 255, 255, 0.25);
+
+            /* Zeichenbare Farben des Garagen-SVGs (theme-abhaengig) */
+            --wall-top: #262830;
+            --wall-bottom: #1B1C22;
+            --wall-stroke: #353942;
+            --frame-edge: #3A3D46;
+            --frame-mid: #4E525E;
+            --interior-top: #0A0C10;
+            --interior-bottom: #15171E;
+            --interior-glow: rgba(255, 235, 180, 0.15);
+            --floor-line: #252A34;
+            --slat-1: #3E4450;
+            --slat-2: #333842;
+            --slat-3: #282C35;
+            --slat-4: #1E2127;
+            --slat-stroke: #1A1C22;
+            --slat-highlight: rgba(255, 255, 255, 0.15);
+            --slat-line: #20232B;
+            --seal: #111215;
+            --hinge: #4B5563;
+            --threshold: #31343C;
+            --threshold-stroke: #23252B;
+            --art-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Helles IP-Symcon Theme */
+        :root[data-theme="light"] {
+            --accent-strong: #0284C7;
+            --text-main: #0F172A;
+            --text-sub: #475569;
+            --text-muted: #64748B;
+            --btn-bg: rgba(15, 23, 42, 0.06);
+            --btn-border: rgba(15, 23, 42, 0.14);
+            --btn-hover: rgba(15, 23, 42, 0.11);
+            --btn-active: rgba(15, 23, 42, 0.17);
+            /* Statusfarben abgedunkelt fuer ausreichenden Kontrast auf Weiss */
+            --color-closed: #047857;
+            --color-opening: #0369A1;
+            --color-open: #B91C1C;
+            --color-closing: #B45309;
+            --color-stopped: #475569;
+            --color-offline: #64748B;
+
+            /* Garage in heller Ausfuehrung: Tor bleibt klar vom Innenraum getrennt */
+            --wall-top: #EDF0F4;
+            --wall-bottom: #DCE1E8;
+            --wall-stroke: #C3CAD4;
+            --frame-edge: #C6CDD7;
+            --frame-mid: #DFE4EB;
+            --interior-top: #8C97A6;
+            --interior-bottom: #A7B1BE;
+            --interior-glow: rgba(255, 214, 140, 0.24);
+            --floor-line: #8C97A6;
+            --slat-1: #F5F7FA;
+            --slat-2: #EAEEF3;
+            --slat-3: #DDE2EA;
+            --slat-4: #CDD4DE;
+            --slat-stroke: #B7C0CC;
+            --slat-highlight: rgba(255, 255, 255, 0.9);
+            --slat-line: #C2C9D4;
+            --seal: #AEB6C1;
+            --hinge: #8C97A6;
+            --threshold: #D3D9E1;
+            --threshold-stroke: #B9C1CC;
+            --art-shadow: 0 3px 8px rgba(15, 23, 42, 0.18);
+        }
+
+        /* Helle Feinanpassungen fuer Bedienelemente */
+        :root[data-theme="light"] .status-pill {
+            background: rgba(16, 185, 129, 0.10);
+            border-color: color-mix(in srgb, currentColor 40%, transparent);
+        }
+        :root[data-theme="light"] .status-pill .status-dot {
+            background-color: currentColor;
+        }
+
+        :root[data-theme="light"] .preset-btn {
+            border-color: rgba(15, 23, 42, 0.12);
+            background: rgba(15, 23, 42, 0.04);
+        }
+        :root[data-theme="light"] .preset-btn:hover {
+            background: rgba(15, 23, 42, 0.09);
+            border-color: rgba(15, 23, 42, 0.22);
+        }
+        :root[data-theme="light"] .preset-btn.active-target {
+            border-color: var(--accent-strong, #0284C7);
+            color: var(--accent-strong, #0284C7);
+            background: rgba(2, 132, 199, 0.12);
+            box-shadow: 0 0 8px rgba(2, 132, 199, 0.2);
+        }
+        :root[data-theme="light"] .action-button:hover {
+            border-color: rgba(15, 23, 42, 0.22);
+        }
+        :root[data-theme="light"] .action-button.impulse-active {
+            border-color: var(--accent-strong, #0284C7) !important;
+            box-shadow: 0 0 12px rgba(2, 132, 199, 0.3);
+        }
+        :root[data-theme="light"] .impulse-indicator {
+            color: var(--accent-strong, #0284C7);
+        }
+        :root[data-theme="light"] .impulse-dot {
+            background: var(--accent-strong, #0284C7);
+            box-shadow: 0 0 6px rgba(2, 132, 199, 0.55);
+        }
+        :root[data-theme="light"] .open-duration.warning {
+            color: #B45309;
+        }
+        :root[data-theme="light"] .offline-pill {
+            color: #B91C1C;
+            background: rgba(239, 68, 68, 0.12);
+            border-color: rgba(239, 68, 68, 0.35);
         }
 
         * {
@@ -175,7 +325,7 @@
         .garage-svg {
             width: 100%;
             height: 100%;
-            filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
+            filter: drop-shadow(var(--art-shadow));
         }
 
         /* Slats sliding animation */
@@ -245,8 +395,8 @@
             right: calc(4.5% + 3px);
             font-size: clamp(10px, 3cqw, 15px);
             font-weight: 700;
-            color: var(--text-main);
-            background: rgba(15, 23, 42, 0.8);
+            color: #F8FAFC;
+            background: rgba(15, 23, 42, 0.82);
             border: 1px solid rgba(255, 255, 255, 0.15);
             padding: 1.5px 6px;
             border-radius: 6px;
@@ -475,34 +625,34 @@
 
                         <!-- Farbverlauf Garagenwand -->
                         <linearGradient id="wallGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="#262830" />
-                            <stop offset="100%" stop-color="#1B1C22" />
+                            <stop offset="0%" stop-color="var(--wall-top)" />
+                            <stop offset="100%" stop-color="var(--wall-bottom)" />
                         </linearGradient>
 
                         <!-- Farbverlauf Torrahmen -->
                         <linearGradient id="frameGrad" x1="0" y1="0" x2="1" y2="0">
-                            <stop offset="0%" stop-color="#3A3D46" />
-                            <stop offset="50%" stop-color="#4E525E" />
-                            <stop offset="100%" stop-color="#3A3D46" />
+                            <stop offset="0%" stop-color="var(--frame-edge)" />
+                            <stop offset="50%" stop-color="var(--frame-mid)" />
+                            <stop offset="100%" stop-color="var(--frame-edge)" />
                         </linearGradient>
 
                         <!-- Farbverlauf Torinnenraum -->
                         <linearGradient id="interiorGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="#0A0C10" />
-                            <stop offset="100%" stop-color="#15171E" />
+                            <stop offset="0%" stop-color="var(--interior-top)" />
+                            <stop offset="100%" stop-color="var(--interior-bottom)" />
                         </linearGradient>
 
                         <!-- Farbverlauf Sektional-Lamelle -->
                         <linearGradient id="slatGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stop-color="#3E4450" />
-                            <stop offset="12%" stop-color="#333842" />
-                            <stop offset="88%" stop-color="#282C35" />
-                            <stop offset="100%" stop-color="#1E2127" />
+                            <stop offset="0%" stop-color="var(--slat-1)" />
+                            <stop offset="12%" stop-color="var(--slat-2)" />
+                            <stop offset="88%" stop-color="var(--slat-3)" />
+                            <stop offset="100%" stop-color="var(--slat-4)" />
                         </linearGradient>
                     </defs>
 
                     <!-- Äußere Garage / Wand -->
-                    <rect x="8" y="8" width="164" height="104" rx="6" fill="url(#wallGrad)" stroke="#353942" stroke-width="1.5" />
+                    <rect x="8" y="8" width="164" height="104" rx="6" fill="url(#wallGrad)" stroke="var(--wall-stroke)" stroke-width="1.5" />
 
                     <!-- Sturz & Laibung (Torrahmen) -->
                     <rect x="18" y="16" width="144" height="96" rx="4" fill="url(#frameGrad)" />
@@ -511,47 +661,47 @@
                     <rect x="22" y="20" width="136" height="88" rx="2" fill="url(#interiorGrad)" />
 
                     <!-- Details im Innenraum: Bodenlinie & dezentes Scheinwerferlicht -->
-                    <line x1="22" y1="104" x2="158" y2="104" stroke="#252A34" stroke-width="2" />
+                    <line x1="22" y1="104" x2="158" y2="104" stroke="var(--floor-line)" stroke-width="2" />
                     <!-- Deckenleuchte / Ambient-Glow im Garageninneren -->
-                    <ellipse cx="90" cy="22" rx="30" ry="4" fill="rgba(255, 235, 180, 0.15)" />
+                    <ellipse cx="90" cy="22" rx="30" ry="4" fill="var(--interior-glow)" />
 
                     <!-- Sektionaltor-Lamellen (innerhalb des Clip-Pfades) -->
                     <g clip-path="url(#doorOpeningClip)">
                         <g id="doorSlatsGroup" transform="translate(0, 0)">
                             <!-- Lamelle 1 (Oberste) -->
-                            <rect x="23" y="21" width="134" height="20" rx="1.5" fill="url(#slatGrad)" stroke="#1A1C22" stroke-width="0.75" />
-                            <line x1="25" y1="22" x2="155" y2="22" stroke="rgba(255,255,255,0.15)" stroke-width="0.75" />
-                            <line x1="25" y1="31" x2="155" y2="31" stroke="#20232B" stroke-width="0.5" />
+                            <rect x="23" y="21" width="134" height="20" rx="1.5" fill="url(#slatGrad)" stroke="var(--slat-stroke)" stroke-width="0.75" />
+                            <line x1="25" y1="22" x2="155" y2="22" stroke="var(--slat-highlight)" stroke-width="0.75" />
+                            <line x1="25" y1="31" x2="155" y2="31" stroke="var(--slat-line)" stroke-width="0.5" />
 
                             <!-- Lamelle 2 -->
-                            <rect x="23" y="43" width="134" height="20" rx="1.5" fill="url(#slatGrad)" stroke="#1A1C22" stroke-width="0.75" />
-                            <line x1="25" y1="44" x2="155" y2="44" stroke="rgba(255,255,255,0.15)" stroke-width="0.75" />
-                            <line x1="25" y1="53" x2="155" y2="53" stroke="#20232B" stroke-width="0.5" />
+                            <rect x="23" y="43" width="134" height="20" rx="1.5" fill="url(#slatGrad)" stroke="var(--slat-stroke)" stroke-width="0.75" />
+                            <line x1="25" y1="44" x2="155" y2="44" stroke="var(--slat-highlight)" stroke-width="0.75" />
+                            <line x1="25" y1="53" x2="155" y2="53" stroke="var(--slat-line)" stroke-width="0.5" />
 
                             <!-- Lamelle 3 -->
-                            <rect x="23" y="65" width="134" height="20" rx="1.5" fill="url(#slatGrad)" stroke="#1A1C22" stroke-width="0.75" />
-                            <line x1="25" y1="66" x2="155" y2="66" stroke="rgba(255,255,255,0.15)" stroke-width="0.75" />
-                            <line x1="25" y1="75" x2="155" y2="75" stroke="#20232B" stroke-width="0.5" />
+                            <rect x="23" y="65" width="134" height="20" rx="1.5" fill="url(#slatGrad)" stroke="var(--slat-stroke)" stroke-width="0.75" />
+                            <line x1="25" y1="66" x2="155" y2="66" stroke="var(--slat-highlight)" stroke-width="0.75" />
+                            <line x1="25" y1="75" x2="155" y2="75" stroke="var(--slat-line)" stroke-width="0.5" />
 
                             <!-- Lamelle 4 (Unterste mit Gummidichtung) -->
-                            <rect x="23" y="87" width="134" height="21" rx="1.5" fill="url(#slatGrad)" stroke="#1A1C22" stroke-width="0.75" />
-                            <line x1="25" y1="88" x2="155" y2="88" stroke="rgba(255,255,255,0.15)" stroke-width="0.75" />
-                            <line x1="25" y1="97" x2="155" y2="97" stroke="#20232B" stroke-width="0.5" />
+                            <rect x="23" y="87" width="134" height="21" rx="1.5" fill="url(#slatGrad)" stroke="var(--slat-stroke)" stroke-width="0.75" />
+                            <line x1="25" y1="88" x2="155" y2="88" stroke="var(--slat-highlight)" stroke-width="0.75" />
+                            <line x1="25" y1="97" x2="155" y2="97" stroke="var(--slat-line)" stroke-width="0.5" />
                             <!-- Bodenabschlussdichtung -->
-                            <rect x="23" y="105" width="134" height="3" fill="#111215" />
+                            <rect x="23" y="105" width="134" height="3" fill="var(--seal)" />
 
                             <!-- Beschläge / Scharniere an den Seiten -->
-                            <circle cx="28" cy="43" r="1.5" fill="#4B5563" />
-                            <circle cx="152" cy="43" r="1.5" fill="#4B5563" />
-                            <circle cx="28" cy="65" r="1.5" fill="#4B5563" />
-                            <circle cx="152" cy="65" r="1.5" fill="#4B5563" />
-                            <circle cx="28" cy="87" r="1.5" fill="#4B5563" />
-                            <circle cx="152" cy="87" r="1.5" fill="#4B5563" />
+                            <circle cx="28" cy="43" r="1.5" fill="var(--hinge)" />
+                            <circle cx="152" cy="43" r="1.5" fill="var(--hinge)" />
+                            <circle cx="28" cy="65" r="1.5" fill="var(--hinge)" />
+                            <circle cx="152" cy="65" r="1.5" fill="var(--hinge)" />
+                            <circle cx="28" cy="87" r="1.5" fill="var(--hinge)" />
+                            <circle cx="152" cy="87" r="1.5" fill="var(--hinge)" />
                         </g>
                     </g>
 
                     <!-- Bodenschwelle vorne -->
-                    <rect x="18" y="108" width="144" height="4" fill="#31343C" stroke="#23252B" stroke-width="0.5" />
+                    <rect x="18" y="108" width="144" height="4" fill="var(--threshold)" stroke="var(--threshold-stroke)" stroke-width="0.5" />
                 </svg>
 
                 <!-- Bewegungs-Pfeile Overlay -->
@@ -627,6 +777,26 @@
     <script>
         let currentDoorState = 'closed';
 
+        /**
+         * Dunkelt eine Statusfarbe im hellen Theme ab, damit Text auf hellem
+         * Kachel-Hintergrund lesbar bleibt (Kontrast >= 4.5:1).
+         */
+        function themeColor(hex) {
+            if (document.documentElement.getAttribute('data-theme') !== 'light') {
+                return hex;
+            }
+            const match = /^#([0-9a-f]{6})$/i.exec(hex || '');
+            if (!match) {
+                return hex;
+            }
+            const n = parseInt(match[1], 16);
+            const factor = 0.62;
+            const r = Math.round(((n >> 16) & 255) * factor);
+            const g = Math.round(((n >> 8) & 255) * factor);
+            const b = Math.round((n & 255) * factor);
+            return '#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('');
+        }
+
         function handleDoorClick() {
             const btn = document.getElementById('triggerBtn');
             if (btn) {
@@ -688,7 +858,7 @@
             const statusText = document.getElementById('statusText');
             if (statusPill && statusText) {
                 statusText.textContent = data.stateText || 'Unbekannt';
-                const col = data.stateColor || '#10B981';
+                const col = themeColor(data.stateColor || '#10B981');
                 statusPill.style.color = col;
                 statusPill.style.borderColor = col + '55';
                 statusPill.style.backgroundColor = col + '22';
@@ -748,7 +918,7 @@
             }
             if (triggerBtn && data.stateColor) {
                 // Feine Umrandung passend zum Zustand
-                triggerBtn.style.borderColor = data.stateColor + '55';
+                triggerBtn.style.borderColor = themeColor(data.stateColor) + '55';
             }
             if (btnSvgPath) {
                 if (data.state === 'closed') {

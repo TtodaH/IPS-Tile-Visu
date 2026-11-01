@@ -4,6 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>TileVisu Template</title>
+    <!-- IP-Symcon Theme-Bootstrap: liest die vom Tile-Frame uebergebenen Theme-Farben
+         (cardcolor/textcolor/accentcolor) und setzt data-theme="light|dark" VOR dem ersten Paint. -->
+    <script>
+        (function () {
+            'use strict';
+            function parseHex(value) {
+                if (!value) { return null; }
+                var h = String(value).trim();
+                if (h.charAt(0) === '#') { h = h.substring(1); }
+                if (h.length === 3) {
+                    h = h.charAt(0) + h.charAt(0) + h.charAt(1) + h.charAt(1) + h.charAt(2) + h.charAt(2);
+                }
+                if (!/^[0-9a-f]{6}$/i.test(h)) { return null; }
+                return { r: parseInt(h.substring(0, 2), 16), g: parseInt(h.substring(2, 4), 16), b: parseInt(h.substring(4, 6), 16) };
+            }
+            function luminance(c) {
+                function channel(x) { x = x / 255; return (x <= 0.03928) ? (x / 12.92) : Math.pow((x + 0.055) / 1.055, 2.4); }
+                return 0.2126 * channel(c.r) + 0.7152 * channel(c.g) + 0.0722 * channel(c.b);
+            }
+            var params = new URLSearchParams(window.location.search);
+            var card = parseHex(params.get('cardcolor'));
+            var text = parseHex(params.get('textcolor'));
+            var accent = parseHex(params.get('accentcolor'));
+
+            var isLight = null;
+            if (card) { isLight = luminance(card) > 0.45; }
+            else if (text) { isLight = luminance(text) < 0.45; }
+            else if (window.matchMedia) { isLight = window.matchMedia('(prefers-color-scheme: light)').matches; }
+
+            var root = document.documentElement;
+            root.setAttribute('data-theme', isLight ? 'light' : 'dark');
+            if (card) { root.style.setProperty('--symcon-card', 'rgb(' + card.r + ',' + card.g + ',' + card.b + ')'); }
+            if (text) { root.style.setProperty('--symcon-text', 'rgb(' + text.r + ',' + text.g + ',' + text.b + ')'); }
+            if (accent) { root.style.setProperty('--symcon-accent', 'rgb(' + accent.r + ',' + accent.g + ',' + accent.b + ')'); }
+        })();
+    </script>
     <!-- IP-Symcon Icons / FontAwesome support falls im System vorhanden -->
     <script src="/icons.js" crossorigin="anonymous"></script>
 
@@ -18,18 +54,25 @@
             --card-border: rgba(255, 255, 255, 0.08);
             --btn-bg: rgba(255, 255, 255, 0.08);
             --btn-hover: rgba(255, 255, 255, 0.14);
+            --btn-border: rgba(255, 255, 255, 0.16);
         }
 
-        /* Unterstützung des IP-Symcon visuellen Themas (Dark/Light) */
-        @media (prefers-color-scheme: light) {
-            :root {
-                --text-primary: #0F172A;
-                --text-secondary: #64748B;
-                --card-surface: rgba(0, 0, 0, 0.03);
-                --card-border: rgba(0, 0, 0, 0.06);
-                --btn-bg: rgba(0, 0, 0, 0.05);
-                --btn-hover: rgba(0, 0, 0, 0.09);
-            }
+        /* Helles IP-Symcon Theme: data-theme wird vom Theme-Bootstrap gesetzt
+           (cardcolor/textcolor/accentcolor aus dem Tile-Frame). */
+        :root[data-theme="light"] {
+            --bg-color: #FFFFFF;
+            --text-primary: #0F172A;
+            --text-secondary: #475569;
+            --card-surface: rgba(15, 23, 42, 0.03);
+            --card-border: rgba(15, 23, 42, 0.08);
+            --btn-bg: rgba(15, 23, 42, 0.06);
+            --btn-border: rgba(15, 23, 42, 0.14);
+            --btn-hover: rgba(15, 23, 42, 0.11);
+        }
+
+        :root[data-theme="light"] .tile-icon-box {
+            color: color-mix(in srgb, var(--accent-color) 70%, #0F172A);
+            background: color-mix(in srgb, var(--accent-color) 14%, transparent);
         }
 
         * {
@@ -44,7 +87,7 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background: var(--bg-color);
+            background: var(--symcon-card, var(--bg-color));
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             color: var(--text-primary);
         }
@@ -182,7 +225,7 @@
 
         .action-btn:hover {
             background: var(--btn-hover);
-            border-color: rgba(255, 255, 255, 0.16);
+            border-color: var(--btn-border);
         }
 
         .action-btn:active {
