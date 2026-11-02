@@ -28,6 +28,9 @@ Inspiriert durch das Konzept von [*da8ter/TileVisu-Universelle-Geraete-Kachel*](
 IPS-Tile-Visu/
 ├── library.json
 ├── README.md
+├── docs/                     <-- Doku, OpenSpec und Hilfsskripte (von Symcon ignoriert)
+│   ├── openspec/
+│   └── scripts/
 ├── TileTemplate/             <-- Universelles Kachel-Template (HTML-SDK Starter-Kit)
 │   ├── module.json
 │   ├── module.php
@@ -49,7 +52,7 @@ IPS-Tile-Visu/
 │   ├── form.json
 │   ├── locale.json
 │   └── README.md
-└── scripts/
+└── docs/scripts/
     └── 34621_windrose_legacy_optimized.php  <-- Optimierter Legacy-Fix für unserver
 ```
 
@@ -245,4 +248,4 @@ Falls das historische Skript `34621.ips.php` parallel als Rückfallebene beruhig
        SetValueString($htmlID, $html);
    }
    ```
-   *(Vollständige Vorlage: [`scripts/34621_windrose_legacy_optimized.php`](file:///Users/thomas/projectsgit/PHP/IPS-Tile-Visu/scripts/34621_windrose_legacy_optimized.php))*
+   *(Vollständige Vorlage: [`docs/scripts/34621_windrose_legacy_optimized.php`](docs/scripts/34621_windrose_legacy_optimized.php))*

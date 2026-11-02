@@ -26,3 +26,4 @@ Additionally `TileTemplate` used `@media (prefers-color-scheme: light)`, which f
 - `TileTemplate/module.html`, `GarageDoorTile/module.html`, `WeatherStationTile/module.html`: theme bootstrap, light-theme CSS variable sets, SVG color variables, JS color darkening helper.
 - No PHP, `form.json`, `module.json` or `locale.json` changes; no API or data contract changes.
 - Backwards compatible: without theme parameters the bootstrap falls back to the OS preference, and the dark theme remains byte-for-byte equivalent in appearance.
+- Repository layout: `openspec/` and `scripts/` moved under `docs/`. IP-Symcon treats any top-level folder without a `module.json` as an invalid module (only `libs/`, `docs/`, `imgs/`, `tests/`, `actions/` and dot-folders are exempt), so the previous layout made Module Control reject the whole library.
