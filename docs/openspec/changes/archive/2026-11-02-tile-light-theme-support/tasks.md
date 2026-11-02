@@ -25,7 +25,7 @@
 
 - [x] 5.1 Render all three tiles with dark parameters (`cardcolor=333438`) — unchanged appearance
 - [x] 5.2 Render all three tiles with light parameters (`cardcolor=FFFFFF`) — readable text, badges, buttons and artwork
-- [ ] 5.3 Visual check in the live IP-Symcon WebFront (light and dark theme)
+- [x] 5.3 Visual check in the live IP-Symcon WebFront (light and dark theme)
 - [x] 5.4 Update repo `README.md` with a short note about automatic light/dark theme support
 
 ## 6. Symcon-Modulstruktur (Deployment-Blocker)
@@ -34,4 +34,4 @@
 - [x] 6.2 `openspec/` nach `docs/openspec/` verschoben (behebt "ungueltiges Modul openspec")
 - [x] 6.3 `scripts/` nach `docs/scripts/` verschoben (waere der naechste Fehler gewesen)
 - [x] 6.4 Pfadreferenzen in `.agent/workflows/`, `.agent/skills/` und `README.md` aktualisiert
-- [ ] 6.5 Modul in Symcon neu einlesen und Fehlerfreiheit bestaetigen
+- [x] 6.5 Modul in Symcon neu einlesen und Fehlerfreiheit bestaetigen

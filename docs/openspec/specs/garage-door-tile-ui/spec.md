@@ -20,6 +20,17 @@ The system SHALL provide a responsive, theme-blended HTML-SDK tile displaying th
 - **WHEN** the tile container is enlarged beyond smartphone dimensions (e.g. tablet, desktop 2x2, or fullscreen modal)
 - **THEN** the sectional garage door SVG automatically scales up to utilize the maximum available width and height while maintaining its 3:2 aspect ratio, without compressing or overflowing the control buttons
 
+### Requirement: Theme-aware readability of the garage door tile
+The tile SHALL render legibly in both the dark and the light IP-Symcon visualization theme, deriving the active theme from the tile frame parameters rather than the operating system preference.
+
+#### Scenario: Light visualization theme
+- **WHEN** the tile is opened while a light IP-Symcon design is active
+- **THEN** text, status badge, action button, preset buttons, percentage badge and the sectional door SVG use dark-on-light colors, and status colors pushed by the backend are darkened to keep sufficient contrast
+
+#### Scenario: Dark visualization theme
+- **WHEN** the tile is opened while the dark IP-Symcon design is active
+- **THEN** the tile keeps its original dark appearance with light text and the dark sectional door artwork
+
 ### Requirement: Live WebSocket Synchronization
 The frontend SHALL parse live WebSocket payload pushes without DOM destruction or flickering.
 
