@@ -1,5 +1,5 @@
 {
-    "tr": {
+    "translations": {
         "de": {
             "Fußbodenheizung Kachel – kompakte Kachel-Visualisierung für einen Heizkreis (Raumtemperatur, Sollwert, Basissollwert, Stellgröße). Nur lesend, keine KNX-Schreibzugriffe.": "Fußbodenheizung Kachel – kompakte Kachel-Visualisierung für einen Heizkreis (Raumtemperatur, Sollwert, Basissollwert, Stellgröße). Nur lesend, keine KNX-Schreibzugriffe.",
             "Variablen des Heizkreises": "Variablen des Heizkreises",
@@ -11,13 +11,32 @@
             "Kacheltitel (z.B. 'Fußbodenheizung – Elena')": "Kacheltitel (z.B. 'Fußbodenheizung – Elena')",
             "Basissollwert zusätzlich anzeigen": "Basissollwert zusätzlich anzeigen",
             "Heizt": "Heizt",
-            "Hält": "Hält",
+            "Haelt": "Haelt",
             "Aus": "Aus",
             "Zu warm": "Zu warm",
+            "Heizzustand": "Heizzustand",
             "Raumtemperatur": "Raumtemperatur",
-            "Soll": "Soll",
-            "Basis": "Basis",
-            "Stellgröße": "Stellgröße"
+            "Sollwert": "Sollwert",
+            "Stellgroesse": "Stellgroesse"
+        },
+        "en": {
+            "Fußbodenheizung Kachel – kompakte Kachel-Visualisierung für einen Heizkreis (Raumtemperatur, Sollwert, Basissollwert, Stellgröße). Nur lesend, keine KNX-Schreibzugriffe.": "Floor heating tile – compact tile visualization for one heating circuit (room temperature, setpoint, base setpoint, actuator). Read-only, no KNX write access.",
+            "Variablen des Heizkreises": "Heating circuit variables",
+            "Raumtemperatur (KNX DPT 9, z.B. ID 29451)": "Room temperature (KNX DPT 9, e.g. ID 29451)",
+            "Aktueller Sollwert (KNX DPT 9, z.B. ID 31710)": "Current setpoint (KNX DPT 9, e.g. ID 31710)",
+            "Basissollwert (KNX DPT 9, z.B. ID 16133)": "Base setpoint (KNX DPT 9, e.g. ID 16133)",
+            "Stellgröße Heizen in Prozent (KNX DPT 5, z.B. ID 27810)": "Heating actuator in percent (KNX DPT 5, e.g. ID 27810)",
+            "Darstellung": "Presentation",
+            "Kacheltitel (z.B. 'Fußbodenheizung – Elena')": "Tile title (e.g. 'Floor heating – Elena')",
+            "Basissollwert zusätzlich anzeigen": "Also show base setpoint",
+            "Heizt": "Heating",
+            "Haelt": "Holding",
+            "Aus": "Off",
+            "Zu warm": "Too warm",
+            "Heizzustand": "Heating state",
+            "Raumtemperatur": "Room temperature",
+            "Sollwert": "Setpoint",
+            "Stellgroesse": "Actuator"
         }
     }
 }
