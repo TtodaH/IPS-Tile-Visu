@@ -41,6 +41,12 @@ class HeatingTile extends IPSModule
 
         $this->RegisterPropertyString('TileTitle', 'Fussbodenheizung');
         $this->RegisterPropertyBoolean('ShowBaseSetpoint', true);
+
+        // Sollwert-Bedienung
+        $this->RegisterPropertyBoolean('AllowSetpointControl', true);
+        $this->RegisterPropertyFloat('SetpointStep', 0.5);
+        $this->RegisterPropertyFloat('SetpointMinimum', 5.0);
+        $this->RegisterPropertyFloat('SetpointMaximum', 35.0);
     }
 
     public function Destroy(): void
@@ -113,6 +119,10 @@ class HeatingTile extends IPSModule
     public function RequestAction($Ident, $Value): void
     {
         switch ($Ident) {
+            case 'setSetpoint':
+                $this->WriteSetpoint((float)$Value);
+                break;
+
             case 'refresh':
                 $this->SendTileUpdate();
                 break;
@@ -207,9 +217,17 @@ class HeatingTile extends IPSModule
             $delta = round($roomTemp - $setpoint, 1);
         }
 
+        $setpointWritable = $this->ReadPropertyBoolean('AllowSetpointControl')
+            && $setpoint !== null
+            && $this->IsVariableWritable($setpointID);
+
         return [
             'title'        => $this->ReadPropertyString('TileTitle'),
             'configured'   => count($missing) === 0,
+            'setpointMin'  => (float)$this->ReadPropertyFloat('SetpointMinimum'),
+            'setpointMax'  => (float)$this->ReadPropertyFloat('SetpointMaximum'),
+            'setpointStep' => (float)$this->ReadPropertyFloat('SetpointStep'),
+            'canControl'   => $setpointWritable,
             'missing'      => $missing,
             'roomTemp'     => $roomTemp,
             'roomTempText' => $roomTemp === null ? '–' : number_format($roomTemp, 1, ',', '') . ' °C',
@@ -226,6 +244,85 @@ class HeatingTile extends IPSModule
             'showBase'     => $this->ReadPropertyBoolean('ShowBaseSetpoint'),
             'updatedAt'    => date('H:i'),
         ];
+    }
+
+    /**
+     * Schreibt den Sollwert auf die KNX-Variable.
+     * Nur der aktuelle Sollwert ist schreibbar; der Basissollwert bleibt
+     * absichtlich unangetastet, weil er das Regelkreisverhalten dauerhaft aendert.
+     */
+    private function WriteSetpoint(float $Value): void
+    {
+        if (!$this->ReadPropertyBoolean('AllowSetpointControl')) {
+            $this->SendDebug('SetSetpoint', 'Bedienung ist deaktiviert', 0);
+            $this->SendTileUpdate();
+            return;
+        }
+
+        $setpointID = $this->ReadPropertyInteger('SetpointVariable');
+        if ($setpointID <= 0 || !@IPS_VariableExists($setpointID)) {
+            $this->SendDebug('SetSetpoint', 'Sollwert-Variable fehlt', 0);
+            $this->SendTileUpdate();
+            return;
+        }
+
+        if (!$this->IsVariableWritable($setpointID)) {
+            $this->SendDebug('SetSetpoint', "Variable {$setpointID} ist nicht schreibbar", 0);
+            $this->SendTileUpdate();
+            return;
+        }
+
+        $min  = (float)$this->ReadPropertyFloat('SetpointMinimum');
+        $max  = (float)$this->ReadPropertyFloat('SetpointMaximum');
+        $step = (float)$this->ReadPropertyFloat('SetpointStep');
+
+        if ($step <= 0.0) {
+            $step = 0.5;
+        }
+
+        $value = max($min, min($max, $Value));
+        // Auf das Raster der Schrittweite ziehen
+        $value = round($value / $step) * $step;
+        $value = round($value, 1);
+
+        $this->SendDebug('SetSetpoint', "Schreibe {$value} °C auf Variable {$setpointID}", 0);
+        @RequestAction($setpointID, $value);
+
+        $this->SendTileUpdate();
+    }
+
+    /**
+     * Prueft, ob eine Variable beschreibbar ist.
+     */
+    private function IsVariableWritable(int $VariableID): bool
+    {
+        if ($VariableID <= 0 || !@IPS_VariableExists($VariableID)) {
+            return false;
+        }
+
+        $object = @IPS_GetObject($VariableID);
+        if ($object === false) {
+            return false;
+        }
+
+        $variable = @IPS_GetVariable($VariableID);
+        if ($variable === false) {
+            return false;
+        }
+
+        // Schreibbar ist eine Variable, wenn sie eine eigene Action hat oder
+        // ihr Parent (z.B. das KNX-IO) das Kommando uebernimmt. KNX-Variablen
+        // haben typischerweise keine eigene Action, aber einen Parent.
+        if ((int)($variable['VariableCustomAction'] ?? 0) > 0) {
+            return true;
+        }
+        if ((int)($variable['VariableAction'] ?? 0) > 0) {
+            return true;
+        }
+
+        $parentID = (int)($object['ParentID'] ?? 0);
+
+        return $parentID > 0 && @IPS_InstanceExists($parentID);
     }
 
     /**

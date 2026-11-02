@@ -17,7 +17,13 @@
             "Heizzustand": "Heizzustand",
             "Raumtemperatur": "Raumtemperatur",
             "Sollwert": "Sollwert",
-            "Stellgroesse": "Stellgroesse"
+            "Stellgroesse": "Stellgroesse",
+            "Fußbodenheizung Kachel – kompakte Kachel-Visualisierung für einen Heizkreis (Raumtemperatur, Sollwert, Basissollwert, Stellgröße). Der Sollwert ist einstellbar; der Basissollwert bleibt schreibgeschuetzt.": "Fußbodenheizung Kachel – kompakte Kachel-Visualisierung für einen Heizkreis (Raumtemperatur, Sollwert, Basissollwert, Stellgröße). Der Sollwert ist einstellbar; der Basissollwert bleibt schreibgeschuetzt.",
+            "Sollwert-Bedienung": "Sollwert-Bedienung",
+            "Sollwert in der Kachel einstellbar": "Sollwert in der Kachel einstellbar",
+            "Schrittweite in Kelvin": "Schrittweite in Kelvin",
+            "Kleinster einstellbarer Sollwert in °C": "Kleinster einstellbarer Sollwert in °C",
+            "Groesster einstellbarer Sollwert in °C": "Groesster einstellbarer Sollwert in °C"
         },
         "en": {
             "Fußbodenheizung Kachel – kompakte Kachel-Visualisierung für einen Heizkreis (Raumtemperatur, Sollwert, Basissollwert, Stellgröße). Nur lesend, keine KNX-Schreibzugriffe.": "Floor heating tile – compact tile visualization for one heating circuit (room temperature, setpoint, base setpoint, actuator). Read-only, no KNX write access.",
@@ -36,7 +42,13 @@
             "Heizzustand": "Heating state",
             "Raumtemperatur": "Room temperature",
             "Sollwert": "Setpoint",
-            "Stellgroesse": "Actuator"
+            "Stellgroesse": "Actuator",
+            "Fußbodenheizung Kachel – kompakte Kachel-Visualisierung für einen Heizkreis (Raumtemperatur, Sollwert, Basissollwert, Stellgröße). Der Sollwert ist einstellbar; der Basissollwert bleibt schreibgeschuetzt.": "Fußbodenheizung Kachel – kompakte Kachel-Visualisierung für einen Heizkreis (Raumtemperatur, Sollwert, Basissollwert, Stellgröße). Der Sollwert ist einstellbar; der Basissollwert bleibt schreibgeschuetzt.",
+            "Sollwert-Bedienung": "Setpoint control",
+            "Sollwert in der Kachel einstellbar": "Setpoint adjustable in the tile",
+            "Schrittweite in Kelvin": "Step size in kelvin",
+            "Kleinster einstellbarer Sollwert in °C": "Lowest adjustable setpoint in °C",
+            "Groesster einstellbarer Sollwert in °C": "Highest adjustable setpoint in °C"
         }
     }
 }

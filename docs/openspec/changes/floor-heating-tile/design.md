@@ -40,3 +40,27 @@ Identical luminance bootstrap on `cardcolor`/`textcolor` so the tile matches the
 
 - KNX DPT 9 values are floats with one decimal; rounding must not hide a 0.1 K difference. The tile formats to one decimal and thresholds at 0.3 K.
 - A missing or zero variable ID would render `0.0 °C`. The module shows a configuration hint instead of plausible-looking zeros.
+
+## Addendum: Bedienung und Skalierung (nach Live-Test)
+
+**Sollwert ist schreibbar.**
+Alle vier KNX-Variablen von Elena melden `CapabilityWrite=true`. Die Standard-Kachel
+zeigt fuer den Basissollwert bereits einen Schieberegler, also wird die Kachel
+bedienbar. Das widerspricht der urspruenglichen Non-Goal-Definition und ersetzt sie.
+
+**Geschrieben wird nur auf den Sollwert, nicht auf den Basiswert.**
+Der aktuelle Sollwert ist der Wert, den ein Nutzer im Alltag verstellt. Der
+Basissollwert ist die Konfiguration des Regelkreises; ihn versehentlich zu
+verschieben veraendert das Heizverhalten dauerhaft. Er bleibt in dieser
+Ausbaustufe schreibgeschuetzt und wird nur angezeigt.
+
+**Optimistisches Update mit Rueckfall.**
+Der Slider springt sofort auf den neuen Wert, damit die Bedienung nicht traege
+wirkt. Kommt innerhalb von 1,5 s kein Push vom Backend, wird der zuletzt
+gemeldete Wert wiederhergestellt. So bleibt die Anzeige ehrlich, auch wenn KNX
+den Wert ablehnt.
+
+**Skalierung ueber gemessene Kachelgroesse.**
+Feste `clamp()`-Maxima liessen die Kachel auf grossen Fliesen leer wirken. Die
+Schriftgroessen werden jetzt aus der tatsaechlichen Kachelhoehe abgeleitet und
+bei `resize` neu gesetzt.

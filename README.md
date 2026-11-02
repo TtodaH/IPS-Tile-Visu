@@ -256,16 +256,45 @@ Falls das historische Skript `34621.ips.php` parallel als Rückfallebene beruhig
 
 Kompakte Kachel fuer einen Fussbodenheizungs-Heizkreis. Zeigt Raumtemperatur,
 aktuellen Sollwert, Basissollwert und die Stellgroesse (0-100%) als Radial-Gauge.
-Rein lesend: es werden keine Werte auf den KNX-Bus geschrieben.
+Der aktuelle Sollwert ist direkt in der Kachel einstellbar; der Basissollwert bleibt
+schreibgeschuetzt.
 
 ### Konfiguration
 
 | Eigenschaft | Bedeutung | Beispiel (Elena) |
 |---|---|---|
 | `RoomTemperatureVariable` | Raumtemperatur (KNX DPT 9) | 29451 |
-| `SetpointVariable` | aktueller Sollwert (KNX DPT 9) | 31710 |
-| `BaseSetpointVariable` | Basissollwert (KNX DPT 9) | 16133 |
+| `SetpointVariable` | aktueller Sollwert (KNX DPT 9), schreibbar | 31710 |
+| `BaseSetpointVariable` | Basissollwert (KNX DPT 9), nur Anzeige | 16133 |
 | `ActuatorVariable` | Stellgroesse Heizen (KNX DPT 5) | 27810 |
+| `AllowSetpointControl` | Sollwert-Bedienung einblenden | true |
+| `SetpointStep` | Schrittweite in Kelvin | 0.5 |
+| `SetpointMinimum` | kleinster Sollwert in °C | 5.0 |
+| `SetpointMaximum` | groesster Sollwert in °C | 35.0 |
+
+### Sollwert-Bedienung
+
+Slider plus Minus/Plus-Taster schreiben den Sollwert per `RequestAction` auf die
+konfigurierte KNX-Variable. Die Kachel prueft vorher, ob die Variable ueberhaupt
+schreibbar ist (eigene Action oder Parent-Instanz); ist sie es nicht, wird die
+Bedienleiste ausgeblendet statt ins Leere zu schreiben.
+
+Nach dem Senden springt der Slider sofort auf den neuen Wert. Kommt innerhalb von
+1,5 s kein Push vom Backend, kehrt die Anzeige auf den zuletzt bestaetigten Wert
+zurueck, damit sie nicht dauerhaft einen Wert vortaeuscht, den der Bus nie
+uebernommen hat.
+
+Bewusst **nicht** schreibbar ist der Basissollwert: er ist die Konfiguration des
+Regelkreises, und ihn versehentlich zu verschieben veraendert das Heizverhalten
+dauerhaft.
+
+### Skalierung
+
+Schriftgroessen und Gauge werden aus der tatsaechlichen Kachelgroesse berechnet und
+bei `resize` neu gesetzt, statt ueber feste Maximalwerte zu laufen. Unter 130 px
+Hoehe blendet die Kachel das Gauge-Label aus, unter 100 px zusaetzlich die
+Soll-/Basis-Zeile.
+
 
 ### Zustandslogik
 

@@ -26,3 +26,18 @@
 - [x] 4.2 Verify gauge at 0%, 5%, 50% and 100%
 - [x] 4.3 Verify a configuration hint appears when a variable ID is missing
 - [x] 4.4 Update README with the new module
+
+## 5. Sollwert-Bedienung (Nachtrag nach Live-Test)
+
+- [x] 5.1 Properties fuer Schrittweite, Min- und Max-Temperatur ergaenzen
+- [x] 5.2 `RequestAction` schreibt Sollwert und Basissollwert per `@RequestAction` auf die KNX-Variable
+- [x] 5.3 Schreibbarkeit pruefen (`CapabilityWrite`) und in der Payload melden
+- [x] 5.4 Slider mit Minus/Plus-Tastern im Frontend, inkl. optimistischem Update
+- [x] 5.5 Bei nicht-schreibbarer Variable die Bedienung ausblenden statt ins Leere schreiben
+
+## 6. Skalierung (Nachtrag nach Live-Test)
+
+- [x] 6.1 Schriftgroessen an die tatsaechliche Kachelgroesse koppeln statt fester Maxima
+- [x] 6.2 Vertikale Flaeche fuellen: Kopf, Werte, Gauge, Bedienleiste
+- [x] 6.3 Kompaktmodus fuer kleine Kacheln (Gauge-Label und Nebenwerte ausblenden)
+- [x] 6.4 In drei Groessen und beiden Themes visuell pruefen

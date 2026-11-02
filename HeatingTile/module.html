@@ -43,46 +43,48 @@
 
     <style>
         :root {
-            /* Akzent */
             --accent: #38BDF8;
 
-            /* Flaechen */
             --panel-bg: rgba(255, 255, 255, 0.06);
             --panel-border: rgba(255, 255, 255, 0.12);
             --gauge-track: rgba(255, 255, 255, 0.10);
+            --slider-track: rgba(255, 255, 255, 0.14);
 
-            /* Text */
             --text-main: #F8FAFC;
             --text-sub: #94A3B8;
             --text-muted: #64748B;
 
-            /* Zustaende */
             --color-heating: #EF4444;
             --color-holding: #10B981;
             --color-idle: #64748B;
             --color-overshoot: #F59E0B;
 
             --state-color: var(--color-idle);
-            --shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+
+            /* Skalierung: werden per JS aus der echten Kachelgroesse gesetzt */
+            --fs-temp: 40px;
+            --fs-sub: 12px;
+            --fs-title: 13px;
+            --fs-pill: 11px;
+            --fs-gauge: 18px;
+            --gauge-size: 84px;
+            --gap: 8px;
         }
 
-        /* Helles IP-Symcon Theme */
         :root[data-theme="light"] {
             --panel-bg: rgba(15, 23, 42, 0.04);
             --panel-border: rgba(15, 23, 42, 0.12);
             --gauge-track: rgba(15, 23, 42, 0.10);
+            --slider-track: rgba(15, 23, 42, 0.16);
 
             --text-main: #0F172A;
             --text-sub: #475569;
             --text-muted: #64748B;
 
-            /* Statusfarben abgedunkelt fuer ausreichenden Kontrast auf Weiss */
             --color-heating: #B91C1C;
             --color-holding: #047857;
             --color-idle: #475569;
             --color-overshoot: #B45309;
-
-            --shadow: 0 1px 3px rgba(15, 23, 42, 0.10);
         }
 
         * { box-sizing: border-box; }
@@ -99,19 +101,17 @@
             background: transparent;
             color: var(--text-main);
             -webkit-font-smoothing: antialiased;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 10px;
         }
 
         .tile {
             width: 100%;
             height: 100%;
+            padding: 10px 12px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: var(--gap);
             min-height: 0;
+            overflow: hidden;
         }
 
         /* ---------- Kopf ---------- */
@@ -122,16 +122,20 @@
             justify-content: space-between;
             gap: 8px;
             flex: 0 0 auto;
+            min-width: 0;
         }
 
         .tile-title {
-            font-size: 13px;
+            font-size: var(--fs-title);
             font-weight: 600;
             color: var(--text-sub);
-            letter-spacing: 0.01em;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            /* Muss schrumpfen koennen: lange Raumnamen duerfen die
+               Zustands-Pille nicht aus dem Rahmen draengen. */
+            flex: 1 1 auto;
+            min-width: 0;
         }
 
         .state-pill {
@@ -140,10 +144,11 @@
             gap: 5px;
             padding: 3px 9px;
             border-radius: 999px;
-            font-size: 11px;
+            font-size: var(--fs-pill);
             font-weight: 700;
             line-height: 1;
             white-space: nowrap;
+            flex: 0 0 auto;
             color: var(--state-color);
             background: color-mix(in srgb, var(--state-color) 14%, transparent);
             border: 1px solid color-mix(in srgb, var(--state-color) 32%, transparent);
@@ -155,7 +160,6 @@
             height: 6px;
             border-radius: 50%;
             background: var(--state-color);
-            flex: 0 0 auto;
         }
 
         .state-pill.is-heating .state-dot {
@@ -163,8 +167,8 @@
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1;   transform: scale(1); }
-            50%      { opacity: 0.35; transform: scale(0.78); }
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%      { opacity: 0.3; transform: scale(0.75); }
         }
 
         /* ---------- Hauptbereich ---------- */
@@ -173,33 +177,36 @@
             flex: 1 1 auto;
             display: flex;
             align-items: center;
-            gap: 12px;
+            justify-content: space-between;
+            gap: 10px;
             min-height: 0;
         }
 
         .values {
-            flex: 1 1 auto;
             display: flex;
             flex-direction: column;
+            justify-content: center;
             gap: 2px;
             min-width: 0;
+            flex: 1 1 auto;
         }
 
         .room-temp {
-            font-size: clamp(28px, 13vmin, 46px);
+            font-size: var(--fs-temp);
             font-weight: 700;
             line-height: 1;
             letter-spacing: -0.02em;
             color: var(--text-main);
             font-variant-numeric: tabular-nums;
+            white-space: nowrap;
         }
 
         .temp-labels {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
-            margin-top: 4px;
-            font-size: 11px;
+            margin-top: 3px;
+            font-size: var(--fs-sub);
             color: var(--text-sub);
             font-variant-numeric: tabular-nums;
         }
@@ -211,24 +218,17 @@
             white-space: nowrap;
         }
 
-        .temp-item .lbl {
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .temp-item .val {
-            font-weight: 600;
-            color: var(--text-main);
-        }
+        .temp-item .lbl { color: var(--text-muted); font-weight: 500; }
+        .temp-item .val { font-weight: 600; color: var(--text-main); }
 
         .hidden { display: none !important; }
 
-        /* ---------- Radial-Gauge ---------- */
+        /* ---------- Gauge ---------- */
 
         .gauge {
             flex: 0 0 auto;
-            width: clamp(62px, 26vmin, 92px);
-            height: clamp(62px, 26vmin, 92px);
+            width: var(--gauge-size);
+            height: var(--gauge-size);
             position: relative;
         }
 
@@ -242,21 +242,21 @@
         .gauge-track {
             fill: none;
             stroke: var(--gauge-track);
-            stroke-width: 8;
+            stroke-width: 9;
             stroke-linecap: round;
         }
 
         .gauge-fill {
             fill: none;
             stroke: var(--accent);
-            stroke-width: 8;
+            stroke-width: 9;
             stroke-linecap: round;
-            transition: stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.25s ease;
+            transition: stroke-dashoffset 0.45s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.25s ease;
         }
 
-        .gauge.is-heating .gauge-fill { stroke: var(--color-heating); }
-        .gauge.is-holding .gauge-fill { stroke: var(--color-holding); }
-        .gauge.is-idle    .gauge-fill { stroke: var(--text-muted); }
+        .gauge.is-heating   .gauge-fill { stroke: var(--color-heating); }
+        .gauge.is-holding   .gauge-fill { stroke: var(--color-holding); }
+        .gauge.is-idle      .gauge-fill { stroke: var(--text-muted); }
         .gauge.is-overshoot .gauge-fill { stroke: var(--color-overshoot); }
 
         .gauge-center {
@@ -266,12 +266,11 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 0;
             pointer-events: none;
         }
 
         .gauge-value {
-            font-size: clamp(13px, 5.2vmin, 19px);
+            font-size: var(--fs-gauge);
             font-weight: 700;
             line-height: 1;
             color: var(--text-main);
@@ -287,6 +286,94 @@
             margin-top: 2px;
         }
 
+        /* ---------- Sollwert-Bedienung ---------- */
+
+        .control {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 10px;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+        }
+
+        .step-btn {
+            flex: 0 0 auto;
+            width: 26px;
+            height: 26px;
+            border-radius: 7px;
+            border: 1px solid var(--panel-border);
+            background: transparent;
+            color: var(--text-main);
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            transition: background 0.15s ease, transform 0.1s ease;
+        }
+
+        .step-btn:hover  { background: var(--panel-border); }
+        .step-btn:active { transform: scale(0.92); }
+
+        .slider-wrap {
+            flex: 1 1 auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        .slider {
+            flex: 1 1 auto;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--slider-track);
+            outline: none;
+            min-width: 0;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--state-color);
+            border: 2px solid var(--symcon-card, #111);
+            cursor: pointer;
+            transition: transform 0.12s ease;
+        }
+
+        .slider::-webkit-slider-thumb:active { transform: scale(1.2); }
+
+        .slider::-moz-range-thumb {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--state-color);
+            border: 2px solid var(--symcon-card, #111);
+            cursor: pointer;
+        }
+
+        .slider-value {
+            flex: 0 0 auto;
+            font-size: var(--fs-sub);
+            font-weight: 700;
+            color: var(--text-main);
+            font-variant-numeric: tabular-nums;
+            min-width: 46px;
+            text-align: right;
+        }
+
         /* ---------- Konfigurationshinweis ---------- */
 
         .config-hint {
@@ -297,32 +384,25 @@
             border-radius: 10px;
             background: var(--panel-bg);
             border: 1px solid var(--panel-border);
-            box-shadow: var(--shadow);
         }
 
         .config-hint.visible { display: flex; }
 
         .config-hint-title {
-            font-size: 12px;
+            font-size: var(--fs-sub);
             font-weight: 700;
             color: var(--color-overshoot);
         }
 
         .config-hint-text {
-            font-size: 11px;
+            font-size: var(--fs-sub);
             line-height: 1.45;
             color: var(--text-sub);
-        }
-
-        /* Wenn die Kachel sehr klein ist, Beschriftungen ausduennen */
-        @media (max-height: 150px) {
-            .temp-labels { display: none; }
-            .gauge-label { display: none; }
         }
     </style>
 </head>
 <body>
-    <div class="tile">
+    <div class="tile" id="tile">
         <div class="tile-header">
             <div class="tile-title" id="tileTitle">Fussbodenheizung</div>
             <div class="state-pill" id="statePill">
@@ -355,9 +435,18 @@
                 </svg>
                 <div class="gauge-center">
                     <div class="gauge-value" id="actuatorText">–</div>
-                    <div class="gauge-label">Stellgr.</div>
+                    <div class="gauge-label" id="gaugeLabel">Stellgr.</div>
                 </div>
             </div>
+        </div>
+
+        <div class="control" id="controlBar">
+            <button class="step-btn" id="btnMinus" type="button" aria-label="Sollwert senken">−</button>
+            <div class="slider-wrap">
+                <input class="slider" id="setpointSlider" type="range" min="5" max="35" step="0.5" value="22">
+                <span class="slider-value" id="sliderValue">–</span>
+            </div>
+            <button class="step-btn" id="btnPlus" type="button" aria-label="Sollwert erhoehen">+</button>
         </div>
 
         <div class="config-hint" id="configHint">
@@ -370,10 +459,10 @@
         (function () {
             'use strict';
 
-            // Bogenlaenge des 270-Grad-Gauge: r=42 -> Umfang 263.89, 3/4 davon = 197.92
             var ARC_LENGTH = 197.9;
 
             var els = {
+                tile:       document.getElementById('tile'),
                 title:      document.getElementById('tileTitle'),
                 statePill:  document.getElementById('statePill'),
                 stateText:  document.getElementById('stateText'),
@@ -383,39 +472,167 @@
                 baseWrap:   document.getElementById('baseWrap'),
                 gauge:      document.getElementById('gauge'),
                 gaugeFill:  document.getElementById('gaugeFill'),
+                gaugeLabel: document.getElementById('gaugeLabel'),
                 actuator:   document.getElementById('actuatorText'),
+                controlBar: document.getElementById('controlBar'),
+                slider:     document.getElementById('setpointSlider'),
+                sliderVal:  document.getElementById('sliderValue'),
+                btnMinus:   document.getElementById('btnMinus'),
+                btnPlus:    document.getElementById('btnPlus'),
                 configHint: document.getElementById('configHint'),
                 configText: document.getElementById('configHintText'),
                 mainArea:   document.getElementById('mainArea')
             };
 
-            var lastState = null;
+            var state = {
+                lastState: null,
+                canControl: false,
+                // setpoint = was der Nutzer gerade sieht (optimistisch)
+                // confirmed = was das Backend zuletzt gemeldet hat
+                setpoint: 22,
+                confirmed: 22,
+                step: 0.5,
+                min: 5,
+                max: 35,
+                pendingValue: null,
+                pendingTimer: null
+            };
+
+            /* ----------------------------------------------------------------
+             * Skalierung: alle Schriftgroessen aus der echten Kachelgroesse.
+             * Die Kachel wird im WebFront frei skaliert, deshalb ist eine
+             * feste Pixelgroesse immer an mindestens einer Stelle falsch.
+             * ---------------------------------------------------------------- */
+
+            function applyScale() {
+                var w = els.tile.clientWidth;
+                var h = els.tile.clientHeight;
+                if (w <= 0 || h <= 0) { return; }
+
+                var root = document.documentElement;
+
+                // Basis: kuerzere Kante, gedeckelt damit riesige Kacheln nicht ausufern
+                var base = Math.min(w, h * 1.45);
+                var compact = h < 130;
+                var tiny = h < 100;
+
+                var tempSize = Math.max(22, Math.min(base * 0.21, 62));
+                var subSize = Math.max(9, Math.min(base * 0.037, 14));
+                var titleSize = Math.max(10, Math.min(base * 0.040, 15));
+                var gaugeSize = Math.max(48, Math.min(Math.min(w, h) * 0.42, 116));
+
+                root.style.setProperty('--fs-temp', tempSize.toFixed(1) + 'px');
+                root.style.setProperty('--fs-sub', subSize.toFixed(1) + 'px');
+                root.style.setProperty('--fs-title', titleSize.toFixed(1) + 'px');
+                root.style.setProperty('--fs-pill', Math.max(9, subSize * 0.92).toFixed(1) + 'px');
+                root.style.setProperty('--fs-gauge', Math.max(11, gaugeSize * 0.20).toFixed(1) + 'px');
+                root.style.setProperty('--gauge-size', gaugeSize.toFixed(0) + 'px');
+                root.style.setProperty('--gap', (compact ? 5 : 8) + 'px');
+
+                els.gaugeLabel.classList.toggle('hidden', compact);
+                els.tempLabelsTiny(tiny);
+            }
+
+            els.tempLabelsTiny = function (tiny) {
+                var labels = document.querySelector('.temp-labels');
+                if (labels) { labels.classList.toggle('hidden', tiny); }
+            };
+
+            if (window.ResizeObserver) {
+                new ResizeObserver(applyScale).observe(els.tile);
+            }
+            window.addEventListener('resize', applyScale);
+            applyScale();
+
+            /* ----------------------------------------------------------------
+             * Darstellung
+             * ---------------------------------------------------------------- */
 
             function setGauge(percent) {
                 var p = Math.max(0, Math.min(100, Number(percent) || 0));
-                var offset = ARC_LENGTH - (ARC_LENGTH * p / 100);
-                els.gaugeFill.style.strokeDashoffset = offset.toFixed(2);
+                els.gaugeFill.style.strokeDashoffset = (ARC_LENGTH - (ARC_LENGTH * p / 100)).toFixed(2);
             }
 
-            function setState(state, color) {
-                if (state === lastState) { return; }
-                lastState = state;
+            function setState(key) {
+                if (key === state.lastState) { return; }
+                state.lastState = key;
 
                 els.gauge.classList.remove('is-heating', 'is-holding', 'is-idle', 'is-overshoot');
-                els.gauge.classList.add('is-' + state);
+                els.gauge.classList.add('is-' + key);
 
-                els.statePill.classList.remove('is-heating');
-                if (state === 'heating') { els.statePill.classList.add('is-heating'); }
+                els.statePill.classList.toggle('is-heating', key === 'heating');
 
-                var root = document.documentElement;
                 var map = {
                     heating:   '--color-heating',
                     holding:   '--color-holding',
                     idle:      '--color-idle',
                     overshoot: '--color-overshoot'
                 };
-                root.style.setProperty('--state-color', 'var(' + (map[state] || '--color-idle') + ')');
+                document.documentElement.style.setProperty(
+                    '--state-color', 'var(' + (map[key] || '--color-idle') + ')'
+                );
             }
+
+            /* ----------------------------------------------------------------
+             * Sollwert-Bedienung
+             * ---------------------------------------------------------------- */
+
+            function formatTemp(v) {
+                return (Math.round(v * 10) / 10).toFixed(1).replace('.', ',') + ' °C';
+            }
+
+            function snap(v) {
+                var step = state.step > 0 ? state.step : 0.5;
+                v = Math.round(v / step) * step;
+                return Math.max(state.min, Math.min(state.max, Math.round(v * 10) / 10));
+            }
+
+            function pushSetpoint(value) {
+                value = snap(value);
+                if (value === state.setpoint) { return; }
+
+                state.setpoint = value;
+                els.slider.value = String(value);
+                els.sliderVal.textContent = formatTemp(value);
+
+                // Optimistisch: Anzeige sofort nachziehen, dann bestaetigen lassen
+                state.pendingValue = value;
+                if (state.pendingTimer) { clearTimeout(state.pendingTimer); }
+                state.pendingTimer = setTimeout(function () {
+                    // Kein Push vom Backend innerhalb von 1,5 s -> der Schreibvorgang
+                    // hat nicht gegriffen. Anzeige auf den zuletzt bestaetigten
+                    // Wert zurueckziehen, statt eine Luege stehen zu lassen.
+                    state.pendingTimer = null;
+                    state.pendingValue = null;
+                    state.setpoint = state.confirmed;
+                    els.slider.value = String(state.confirmed);
+                    els.sliderVal.textContent = formatTemp(state.confirmed);
+                }, 1500);
+
+                if (typeof requestAction === 'function') {
+                    requestAction('setSetpoint', value);
+                }
+            }
+
+            els.slider.addEventListener('input', function () {
+                els.sliderVal.textContent = formatTemp(parseFloat(els.slider.value));
+            });
+
+            els.slider.addEventListener('change', function () {
+                pushSetpoint(parseFloat(els.slider.value));
+            });
+
+            els.btnMinus.addEventListener('click', function () {
+                pushSetpoint(parseFloat(els.slider.value) - state.step);
+            });
+
+            els.btnPlus.addEventListener('click', function () {
+                pushSetpoint(parseFloat(els.slider.value) + state.step);
+            });
+
+            /* ----------------------------------------------------------------
+             * Nachrichten vom Backend
+             * ---------------------------------------------------------------- */
 
             function handleMessage(raw) {
                 var data;
@@ -426,18 +643,16 @@
                 }
                 if (!data) { return; }
 
-                // Konfigurationshinweis
                 var configured = data.configured !== false;
                 els.configHint.classList.toggle('visible', !configured);
                 els.mainArea.classList.toggle('hidden', !configured);
+
                 if (!configured) {
-                    var missing = (data.missing || []).join(', ');
-                    els.configText.textContent = 'Bitte im Modul folgende Variablen zuweisen: ' + (missing || 'Variablen') + '.';
+                    els.configText.textContent = 'Bitte im Modul folgende Variablen zuweisen: '
+                        + ((data.missing || []).join(', ') || 'Variablen') + '.';
                 }
 
-                if (typeof data.title === 'string') {
-                    els.title.textContent = data.title;
-                }
+                if (typeof data.title === 'string') { els.title.textContent = data.title; }
 
                 els.roomTemp.textContent = data.roomTempText || '–';
                 els.setpoint.textContent = data.setpointText || '–';
@@ -447,17 +662,41 @@
                 els.actuator.textContent = data.actuatorText || '–';
                 setGauge(configured ? (data.actuator || 0) : 0);
 
-                // Bei unvollstaendiger Konfiguration nie einen Heizzustand vortaeuschen
                 if (configured) {
-                    setState(data.state || 'idle', data.stateColor);
+                    setState(data.state || 'idle');
                     els.stateText.textContent = data.stateText || 'Aus';
                 } else {
-                    setState('idle', null);
+                    setState('idle');
                     els.stateText.textContent = 'Aus';
+                }
+
+                // Sollwert-Bedienung
+                state.canControl = data.canControl === true && configured;
+                els.controlBar.classList.toggle('hidden', !state.canControl);
+
+                if (typeof data.setpointMin === 'number')  { state.min  = data.setpointMin; }
+                if (typeof data.setpointMax === 'number')  { state.max  = data.setpointMax; }
+                if (typeof data.setpointStep === 'number') { state.step = data.setpointStep; }
+
+                els.slider.min = String(state.min);
+                els.slider.max = String(state.max);
+                els.slider.step = String(state.step);
+
+                if (typeof data.setpoint === 'number') {
+                    // Kommt ein Push, ist der Wert bestaetigt
+                    if (state.pendingTimer) { clearTimeout(state.pendingTimer); state.pendingTimer = null; }
+                    state.pendingValue = null;
+                    state.confirmed = data.setpoint;
+                    state.setpoint = data.setpoint;
+                    els.slider.value = String(data.setpoint);
+                    els.sliderVal.textContent = formatTemp(data.setpoint);
+                } else {
+                    els.sliderVal.textContent = '–';
                 }
             }
 
             window.handleMessage = handleMessage;
+            applyScale();
 
             if (window.__INITIAL_DATA__ && !window.__INITIAL_RENDERED__) {
                 window.__INITIAL_RENDERED__ = true;

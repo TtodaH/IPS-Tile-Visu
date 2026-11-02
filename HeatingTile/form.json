@@ -2,7 +2,7 @@
     "elements": [
         {
             "type": "Label",
-            "caption": "Fußbodenheizung Kachel – kompakte Kachel-Visualisierung für einen Heizkreis (Raumtemperatur, Sollwert, Basissollwert, Stellgröße). Nur lesend, keine KNX-Schreibzugriffe."
+            "caption": "Fußbodenheizung Kachel – kompakte Kachel-Visualisierung für einen Heizkreis (Raumtemperatur, Sollwert, Basissollwert, Stellgröße). Der Sollwert ist einstellbar; der Basissollwert bleibt schreibgeschuetzt."
         },
         {
             "type": "ExpansionPanel",
@@ -45,6 +45,42 @@
                     "type": "CheckBox",
                     "name": "ShowBaseSetpoint",
                     "caption": "Basissollwert zusätzlich anzeigen"
+                }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "Sollwert-Bedienung",
+            "expanded": true,
+            "items": [
+                {
+                    "type": "CheckBox",
+                    "name": "AllowSetpointControl",
+                    "caption": "Sollwert in der Kachel einstellbar"
+                },
+                {
+                    "type": "NumberSpinner",
+                    "name": "SetpointStep",
+                    "caption": "Schrittweite in Kelvin",
+                    "minimum": 0.1,
+                    "maximum": 2.0,
+                    "digits": 1
+                },
+                {
+                    "type": "NumberSpinner",
+                    "name": "SetpointMinimum",
+                    "caption": "Kleinster einstellbarer Sollwert in °C",
+                    "minimum": 5,
+                    "maximum": 30,
+                    "digits": 1
+                },
+                {
+                    "type": "NumberSpinner",
+                    "name": "SetpointMaximum",
+                    "caption": "Groesster einstellbarer Sollwert in °C",
+                    "minimum": 10,
+                    "maximum": 40,
+                    "digits": 1
                 }
             ]
         }
