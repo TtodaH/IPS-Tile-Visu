@@ -291,9 +291,26 @@ dauerhaft.
 ### Skalierung
 
 Schriftgroessen und Gauge werden aus der tatsaechlichen Kachelgroesse berechnet und
-bei `resize` neu gesetzt, statt ueber feste Maximalwerte zu laufen. Unter 130 px
-Hoehe blendet die Kachel das Gauge-Label aus, unter 100 px zusaetzlich die
-Soll-/Basis-Zeile.
+bei `resize` neu gesetzt, statt ueber feste Maximalwerte zu laufen. Eine Messschleife
+verkleinert die Schriften so lange, bis nichts mehr ueberlaeuft. Unter 130 px Hoehe
+blendet die Kachel das Gauge-Label aus, unter 100 px zusaetzlich die Soll-/Basis-Zeile.
+
+### Platz fuer den Symcon-Titel
+
+IP-Symcon zeichnet den Instanznamen **ueber** die Kachel. Ohne reservierten Platz
+ueberlappt er mit dem eigenen Kachelinhalt.
+
+Jede Kachel braucht deshalb als erstes Kind einen Platzhalter:
+
+```html
+<div class="tile">
+    <div class="symcon-header-spacer"></div>
+    ...
+</div>
+```
+
+Die Hoehe kommt aus `--spacer-h` und wird mit der Kachelgroesse gesetzt, aber **nie
+unter 18 px** (echte Titelhoehe). `GarageDoorTile` nutzt dasselbe Muster.
 
 
 ### Zustandslogik
