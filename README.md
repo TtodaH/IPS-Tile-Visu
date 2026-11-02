@@ -249,3 +249,42 @@ Falls das historische Skript `34621.ips.php` parallel als Rückfallebene beruhig
    }
    ```
    *(Vollständige Vorlage: [`docs/scripts/34621_windrose_legacy_optimized.php`](docs/scripts/34621_windrose_legacy_optimized.php))*
+
+---
+
+## HeatingTile – Fussbodenheizung
+
+Kompakte Kachel fuer einen Fussbodenheizungs-Heizkreis. Zeigt Raumtemperatur,
+aktuellen Sollwert, Basissollwert und die Stellgroesse (0-100%) als Radial-Gauge.
+Rein lesend: es werden keine Werte auf den KNX-Bus geschrieben.
+
+### Konfiguration
+
+| Eigenschaft | Bedeutung | Beispiel (Elena) |
+|---|---|---|
+| `RoomTemperatureVariable` | Raumtemperatur (KNX DPT 9) | 29451 |
+| `SetpointVariable` | aktueller Sollwert (KNX DPT 9) | 31710 |
+| `BaseSetpointVariable` | Basissollwert (KNX DPT 9) | 16133 |
+| `ActuatorVariable` | Stellgroesse Heizen (KNX DPT 5) | 27810 |
+
+### Zustandslogik
+
+Der Zustand wird aus Stellgroesse und Temperaturdelta abgeleitet:
+
+| Bedingung | Zustand |
+|---|---|
+| Stellgroesse >= 5% und Raum < Soll - 0,3 K | Heizt |
+| Stellgroesse >= 5% und Raum innerhalb +/- 0,3 K | Haelt |
+| Stellgroesse < 5% | Aus |
+| Raum > Soll + 0,3 K | Zu warm |
+
+### KNX-Adressen der vorhandenen Heizkreise
+
+| Raum | Basis | Raum | Stellgr. | Soll |
+|---|---|---|---|---|
+| Bad | 1/0/4 | 1/1/4 | 1/2/4 | 1/3/4 |
+| Elena | 1/0/2 | 1/1/2 | 1/2/2 | 1/3/2 |
+| Abstellraum | 1/0/1 | 1/1/1 | 1/2/1 | 1/3/1 |
+| Anna | 1/0/3 | 1/1/3 | 1/2/3 | 1/3/3 |
+| Sarah | 1/0/6 | 1/1/6 | 1/2/6 | 1/3/6 |
+| WC | 1/0/5 | 1/1/5 | 1/2/5 | 1/3/5 |

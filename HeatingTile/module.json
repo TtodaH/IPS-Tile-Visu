@@ -1,0 +1,16 @@
+{
+    "id": "{8F3A2C71-4D6E-4B92-9A15-7C3E5B8D1F24}",
+    "name": "Heating Tile",
+    "type": 3,
+    "vendor": "Thomas Hellstern",
+    "aliases": [
+        "Fußbodenheizung Kachel",
+        "Heizung Kachel",
+        "Heating Widget"
+    ],
+    "parentRequirements": [],
+    "childRequirements": [],
+    "implemented": [],
+    "prefix": "HEATTILE",
+    "url": "https://github.com/TtodaH/IPS-Tile-Visu"
+}

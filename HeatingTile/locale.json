@@ -1,0 +1,23 @@
+{
+    "tr": {
+        "de": {
+            "Fußbodenheizung Kachel – kompakte Kachel-Visualisierung für einen Heizkreis (Raumtemperatur, Sollwert, Basissollwert, Stellgröße). Nur lesend, keine KNX-Schreibzugriffe.": "Fußbodenheizung Kachel – kompakte Kachel-Visualisierung für einen Heizkreis (Raumtemperatur, Sollwert, Basissollwert, Stellgröße). Nur lesend, keine KNX-Schreibzugriffe.",
+            "Variablen des Heizkreises": "Variablen des Heizkreises",
+            "Raumtemperatur (KNX DPT 9, z.B. ID 29451)": "Raumtemperatur (KNX DPT 9, z.B. ID 29451)",
+            "Aktueller Sollwert (KNX DPT 9, z.B. ID 31710)": "Aktueller Sollwert (KNX DPT 9, z.B. ID 31710)",
+            "Basissollwert (KNX DPT 9, z.B. ID 16133)": "Basissollwert (KNX DPT 9, z.B. ID 16133)",
+            "Stellgröße Heizen in Prozent (KNX DPT 5, z.B. ID 27810)": "Stellgröße Heizen in Prozent (KNX DPT 5, z.B. ID 27810)",
+            "Darstellung": "Darstellung",
+            "Kacheltitel (z.B. 'Fußbodenheizung – Elena')": "Kacheltitel (z.B. 'Fußbodenheizung – Elena')",
+            "Basissollwert zusätzlich anzeigen": "Basissollwert zusätzlich anzeigen",
+            "Heizt": "Heizt",
+            "Hält": "Hält",
+            "Aus": "Aus",
+            "Zu warm": "Zu warm",
+            "Raumtemperatur": "Raumtemperatur",
+            "Soll": "Soll",
+            "Basis": "Basis",
+            "Stellgröße": "Stellgröße"
+        }
+    }
+}

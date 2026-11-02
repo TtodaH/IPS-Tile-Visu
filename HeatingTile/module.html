@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Heizung Tile</title>
+    <!-- IP-Symcon Theme-Bootstrap: liest die vom Tile-Frame uebergebenen Theme-Farben
+         (cardcolor/textcolor/accentcolor) und setzt data-theme="light|dark" VOR dem ersten Paint. -->
+    <script>
+        (function () {
+            'use strict';
+            function parseHex(value) {
+                if (!value) { return null; }
+                var h = String(value).trim();
+                if (h.charAt(0) === '#') { h = h.substring(1); }
+                if (h.length === 3) {
+                    h = h.charAt(0) + h.charAt(0) + h.charAt(1) + h.charAt(1) + h.charAt(2) + h.charAt(2);
+                }
+                if (!/^[0-9a-f]{6}$/i.test(h)) { return null; }
+                return { r: parseInt(h.substring(0, 2), 16), g: parseInt(h.substring(2, 4), 16), b: parseInt(h.substring(4, 6), 16) };
+            }
+            function luminance(c) {
+                function channel(x) { x = x / 255; return (x <= 0.03928) ? (x / 12.92) : Math.pow((x + 0.055) / 1.055, 2.4); }
+                return 0.2126 * channel(c.r) + 0.7152 * channel(c.g) + 0.0722 * channel(c.b);
+            }
+            var params = new URLSearchParams(window.location.search);
+            var card = parseHex(params.get('cardcolor'));
+            var text = parseHex(params.get('textcolor'));
+            var accent = parseHex(params.get('accentcolor'));
+
+            var isLight = null;
+            if (card) { isLight = luminance(card) > 0.45; }
+            else if (text) { isLight = luminance(text) < 0.45; }
+            else if (window.matchMedia) { isLight = window.matchMedia('(prefers-color-scheme: light)').matches; }
+
+            var root = document.documentElement;
+            root.setAttribute('data-theme', isLight ? 'light' : 'dark');
+            if (card) { root.style.setProperty('--symcon-card', 'rgb(' + card.r + ',' + card.g + ',' + card.b + ')'); }
+            if (text) { root.style.setProperty('--symcon-text', 'rgb(' + text.r + ',' + text.g + ',' + text.b + ')'); }
+            if (accent) { root.style.setProperty('--symcon-accent', 'rgb(' + accent.r + ',' + accent.g + ',' + accent.b + ')'); }
+        })();
+    </script>
+
+    <style>
+        :root {
+            /* Akzent */
+            --accent: #38BDF8;
+
+            /* Flaechen */
+            --panel-bg: rgba(255, 255, 255, 0.06);
+            --panel-border: rgba(255, 255, 255, 0.12);
+            --gauge-track: rgba(255, 255, 255, 0.10);
+
+            /* Text */
+            --text-main: #F8FAFC;
+            --text-sub: #94A3B8;
+            --text-muted: #64748B;
+
+            /* Zustaende */
+            --color-heating: #EF4444;
+            --color-holding: #10B981;
+            --color-idle: #64748B;
+            --color-overshoot: #F59E0B;
+
+            --state-color: var(--color-idle);
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+        }
+
+        /* Helles IP-Symcon Theme */
+        :root[data-theme="light"] {
+            --panel-bg: rgba(15, 23, 42, 0.04);
+            --panel-border: rgba(15, 23, 42, 0.12);
+            --gauge-track: rgba(15, 23, 42, 0.10);
+
+            --text-main: #0F172A;
+            --text-sub: #475569;
+            --text-muted: #64748B;
+
+            /* Statusfarben abgedunkelt fuer ausreichenden Kontrast auf Weiss */
+            --color-heating: #B91C1C;
+            --color-holding: #047857;
+            --color-idle: #475569;
+            --color-overshoot: #B45309;
+
+            --shadow: 0 1px 3px rgba(15, 23, 42, 0.10);
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: transparent;
+            color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .tile {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 0;
+        }
+
+        /* ---------- Kopf ---------- */
+
+        .tile-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            flex: 0 0 auto;
+        }
+
+        .tile-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-sub);
+            letter-spacing: 0.01em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .state-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 9px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 1;
+            white-space: nowrap;
+            color: var(--state-color);
+            background: color-mix(in srgb, var(--state-color) 14%, transparent);
+            border: 1px solid color-mix(in srgb, var(--state-color) 32%, transparent);
+            transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+        }
+
+        .state-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--state-color);
+            flex: 0 0 auto;
+        }
+
+        .state-pill.is-heating .state-dot {
+            animation: pulse 1.6s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1;   transform: scale(1); }
+            50%      { opacity: 0.35; transform: scale(0.78); }
+        }
+
+        /* ---------- Hauptbereich ---------- */
+
+        .main {
+            flex: 1 1 auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-height: 0;
+        }
+
+        .values {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+        }
+
+        .room-temp {
+            font-size: clamp(28px, 13vmin, 46px);
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .temp-labels {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 4px;
+            font-size: 11px;
+            color: var(--text-sub);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .temp-item {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        .temp-item .lbl {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .temp-item .val {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .hidden { display: none !important; }
+
+        /* ---------- Radial-Gauge ---------- */
+
+        .gauge {
+            flex: 0 0 auto;
+            width: clamp(62px, 26vmin, 92px);
+            height: clamp(62px, 26vmin, 92px);
+            position: relative;
+        }
+
+        .gauge svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+            transform: rotate(135deg);
+        }
+
+        .gauge-track {
+            fill: none;
+            stroke: var(--gauge-track);
+            stroke-width: 8;
+            stroke-linecap: round;
+        }
+
+        .gauge-fill {
+            fill: none;
+            stroke: var(--accent);
+            stroke-width: 8;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.25s ease;
+        }
+
+        .gauge.is-heating .gauge-fill { stroke: var(--color-heating); }
+        .gauge.is-holding .gauge-fill { stroke: var(--color-holding); }
+        .gauge.is-idle    .gauge-fill { stroke: var(--text-muted); }
+        .gauge.is-overshoot .gauge-fill { stroke: var(--color-overshoot); }
+
+        .gauge-center {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            pointer-events: none;
+        }
+
+        .gauge-value {
+            font-size: clamp(13px, 5.2vmin, 19px);
+            font-weight: 700;
+            line-height: 1;
+            color: var(--text-main);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .gauge-label {
+            font-size: 8px;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* ---------- Konfigurationshinweis ---------- */
+
+        .config-hint {
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            box-shadow: var(--shadow);
+        }
+
+        .config-hint.visible { display: flex; }
+
+        .config-hint-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--color-overshoot);
+        }
+
+        .config-hint-text {
+            font-size: 11px;
+            line-height: 1.45;
+            color: var(--text-sub);
+        }
+
+        /* Wenn die Kachel sehr klein ist, Beschriftungen ausduennen */
+        @media (max-height: 150px) {
+            .temp-labels { display: none; }
+            .gauge-label { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="tile">
+        <div class="tile-header">
+            <div class="tile-title" id="tileTitle">Fussbodenheizung</div>
+            <div class="state-pill" id="statePill">
+                <span class="state-dot"></span>
+                <span id="stateText">Aus</span>
+            </div>
+        </div>
+
+        <div class="main" id="mainArea">
+            <div class="values">
+                <div class="room-temp" id="roomTempText">–</div>
+                <div class="temp-labels">
+                    <span class="temp-item">
+                        <span class="lbl">Soll</span>
+                        <span class="val" id="setpointText">–</span>
+                    </span>
+                    <span class="temp-item" id="baseWrap">
+                        <span class="lbl">Basis</span>
+                        <span class="val" id="baseText">–</span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="gauge is-idle" id="gauge">
+                <svg viewBox="0 0 100 100" aria-hidden="true">
+                    <circle class="gauge-track" cx="50" cy="50" r="42"
+                            stroke-dasharray="197.9 263.9"></circle>
+                    <circle class="gauge-fill" id="gaugeFill" cx="50" cy="50" r="42"
+                            stroke-dasharray="197.9 263.9" stroke-dashoffset="197.9"></circle>
+                </svg>
+                <div class="gauge-center">
+                    <div class="gauge-value" id="actuatorText">–</div>
+                    <div class="gauge-label">Stellgr.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="config-hint" id="configHint">
+            <div class="config-hint-title">Konfiguration unvollstaendig</div>
+            <div class="config-hint-text" id="configHintText"></div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            'use strict';
+
+            // Bogenlaenge des 270-Grad-Gauge: r=42 -> Umfang 263.89, 3/4 davon = 197.92
+            var ARC_LENGTH = 197.9;
+
+            var els = {
+                title:      document.getElementById('tileTitle'),
+                statePill:  document.getElementById('statePill'),
+                stateText:  document.getElementById('stateText'),
+                roomTemp:   document.getElementById('roomTempText'),
+                setpoint:   document.getElementById('setpointText'),
+                baseText:   document.getElementById('baseText'),
+                baseWrap:   document.getElementById('baseWrap'),
+                gauge:      document.getElementById('gauge'),
+                gaugeFill:  document.getElementById('gaugeFill'),
+                actuator:   document.getElementById('actuatorText'),
+                configHint: document.getElementById('configHint'),
+                configText: document.getElementById('configHintText'),
+                mainArea:   document.getElementById('mainArea')
+            };
+
+            var lastState = null;
+
+            function setGauge(percent) {
+                var p = Math.max(0, Math.min(100, Number(percent) || 0));
+                var offset = ARC_LENGTH - (ARC_LENGTH * p / 100);
+                els.gaugeFill.style.strokeDashoffset = offset.toFixed(2);
+            }
+
+            function setState(state, color) {
+                if (state === lastState) { return; }
+                lastState = state;
+
+                els.gauge.classList.remove('is-heating', 'is-holding', 'is-idle', 'is-overshoot');
+                els.gauge.classList.add('is-' + state);
+
+                els.statePill.classList.remove('is-heating');
+                if (state === 'heating') { els.statePill.classList.add('is-heating'); }
+
+                var root = document.documentElement;
+                var map = {
+                    heating:   '--color-heating',
+                    holding:   '--color-holding',
+                    idle:      '--color-idle',
+                    overshoot: '--color-overshoot'
+                };
+                root.style.setProperty('--state-color', 'var(' + (map[state] || '--color-idle') + ')');
+            }
+
+            function handleMessage(raw) {
+                var data;
+                try {
+                    data = (typeof raw === 'string') ? JSON.parse(raw) : raw;
+                } catch (e) {
+                    return;
+                }
+                if (!data) { return; }
+
+                // Konfigurationshinweis
+                var configured = data.configured !== false;
+                els.configHint.classList.toggle('visible', !configured);
+                els.mainArea.classList.toggle('hidden', !configured);
+                if (!configured) {
+                    var missing = (data.missing || []).join(', ');
+                    els.configText.textContent = 'Bitte im Modul folgende Variablen zuweisen: ' + (missing || 'Variablen') + '.';
+                }
+
+                if (typeof data.title === 'string') {
+                    els.title.textContent = data.title;
+                }
+
+                els.roomTemp.textContent = data.roomTempText || '–';
+                els.setpoint.textContent = data.setpointText || '–';
+                els.baseText.textContent = data.baseSetpointText || '–';
+                els.baseWrap.classList.toggle('hidden', data.showBase === false);
+
+                els.actuator.textContent = data.actuatorText || '–';
+                setGauge(configured ? (data.actuator || 0) : 0);
+
+                // Bei unvollstaendiger Konfiguration nie einen Heizzustand vortaeuschen
+                if (configured) {
+                    setState(data.state || 'idle', data.stateColor);
+                    els.stateText.textContent = data.stateText || 'Aus';
+                } else {
+                    setState('idle', null);
+                    els.stateText.textContent = 'Aus';
+                }
+            }
+
+            window.handleMessage = handleMessage;
+
+            if (window.__INITIAL_DATA__ && !window.__INITIAL_RENDERED__) {
+                window.__INITIAL_RENDERED__ = true;
+                handleMessage(window.__INITIAL_DATA__);
+            }
+        })();
+    </script>
+</body>
+</html>
