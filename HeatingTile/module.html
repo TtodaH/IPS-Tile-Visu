@@ -103,10 +103,19 @@
             -webkit-font-smoothing: antialiased;
         }
 
+        /* Platzhalter fuer den Titel, den IP-Symcon selbst ueber die Kachel
+           zeichnet (Instanzname). Ohne diesen Platz ueberlappt Symcons Titel
+           mit dem eigenen Kachelinhalt. */
+        .symcon-header-spacer {
+            width: 100%;
+            flex: 0 0 auto;
+            height: var(--spacer-h, 18px);
+        }
+
         .tile {
             width: 100%;
             height: 100%;
-            padding: 10px 12px;
+            padding: 8px 12px;
             display: flex;
             flex-direction: column;
             gap: var(--gap);
@@ -180,6 +189,8 @@
             justify-content: space-between;
             gap: 10px;
             min-height: 0;
+            /* Sicherheitsnetz: lieber beschneiden als ueberlappen */
+            overflow: hidden;
         }
 
         .values {
@@ -322,6 +333,23 @@
         .step-btn:hover  { background: var(--panel-border); }
         .step-btn:active { transform: scale(0.92); }
 
+        /* Kompaktmodus fuer flache Kacheln */
+        .control.compact {
+            padding: 3px 5px;
+            gap: 5px;
+        }
+
+        .control.compact .step-btn {
+            width: 21px;
+            height: 21px;
+            font-size: 12px;
+            border-radius: 6px;
+        }
+
+        .control.compact .slider-value {
+            min-width: 40px;
+        }
+
         .slider-wrap {
             flex: 1 1 auto;
             display: flex;
@@ -403,6 +431,8 @@
 </head>
 <body>
     <div class="tile" id="tile">
+        <div class="symcon-header-spacer" id="symconSpacer"></div>
+
         <div class="tile-header">
             <div class="tile-title" id="tileTitle">Fussbodenheizung</div>
             <div class="state-pill" id="statePill">
@@ -504,39 +534,83 @@
              * feste Pixelgroesse immer an mindestens einer Stelle falsch.
              * ---------------------------------------------------------------- */
 
+            var ui = {
+                tempLabels: document.querySelector('.temp-labels')
+            };
+
+            /* Schriftgroessen fuer einen gegebenen Schrumpffaktor setzen. */
+            function applySizes(w, h, scale, opts) {
+                var root = document.documentElement;
+                var base = Math.min(w, h * 1.45) * scale;
+
+                var tempSize  = Math.max(13, Math.min(base * 0.21, 62));
+                var subSize   = Math.max(8,  Math.min(base * 0.037, 14));
+                var titleSize = Math.max(9,  Math.min(base * 0.040, 15));
+
+                // Gauge zusaetzlich durch die verfuegbare Hoehe des Hauptbereichs begrenzen
+                var availMain = els.mainArea.clientHeight;
+                var gaugeByBox = Math.min(w, h) * 0.42 * scale;
+                var gaugeSize = Math.min(gaugeByBox, availMain > 0 ? availMain * 0.98 : gaugeByBox, 116);
+                gaugeSize = Math.max(0, gaugeSize);
+
+                root.style.setProperty('--fs-temp', tempSize.toFixed(1) + 'px');
+                root.style.setProperty('--fs-sub', subSize.toFixed(1) + 'px');
+                root.style.setProperty('--fs-title', titleSize.toFixed(1) + 'px');
+                root.style.setProperty('--fs-pill', Math.max(8, subSize * 0.92).toFixed(1) + 'px');
+                root.style.setProperty('--fs-gauge', Math.max(9, gaugeSize * 0.20).toFixed(1) + 'px');
+                root.style.setProperty('--gauge-size', gaugeSize.toFixed(0) + 'px');
+                root.style.setProperty('--gap', (opts.compact ? 5 : 8) + 'px');
+
+                // IP-Symcon zeichnet den Instanznamen ueber die Kachel. Der Platzhalter
+                // muss diesen Titel abdecken: nie kleiner als 18px (echte Titelhoehe),
+                // bei grossen Kacheln mitwachsend.
+                var spacer = Math.max(18, Math.min(h * 0.13, 32));
+                root.style.setProperty('--spacer-h', spacer.toFixed(0) + 'px');
+            }
+
+            /* Prueft, ob nach dem Setzen der Groessen noch etwas ueberlaeuft. */
+            function hasOverflow(w, h) {
+                if (els.tile.scrollHeight > h + 1 || els.tile.scrollWidth > w + 1) {
+                    return true;
+                }
+                // Hauptbereich: Inhalt darf nicht groesser sein als der Bereich
+                if (els.mainArea.scrollHeight > els.mainArea.clientHeight + 1) {
+                    return true;
+                }
+                // Grosse Temperaturanzeige darf nicht horizontal aus dem Block laufen
+                var block = els.roomTemp.parentElement;
+                if (block && els.roomTemp.scrollWidth > block.clientWidth + 1) {
+                    return true;
+                }
+                return false;
+            }
+
             function applyScale() {
                 var w = els.tile.clientWidth;
                 var h = els.tile.clientHeight;
                 if (w <= 0 || h <= 0) { return; }
 
-                var root = document.documentElement;
-
-                // Basis: kuerzere Kante, gedeckelt damit riesige Kacheln nicht ausufern
-                var base = Math.min(w, h * 1.45);
+                // Stufenweise Ausduennung: erst Beschriftungen, dann das Gauge.
                 var compact = h < 130;
-                var tiny = h < 100;
+                var hideLabels = h < 125;
+                var hideGauge = !compact && false;
+                hideGauge = h < 118;
 
-                var tempSize = Math.max(22, Math.min(base * 0.21, 62));
-                var subSize = Math.max(9, Math.min(base * 0.037, 14));
-                var titleSize = Math.max(10, Math.min(base * 0.040, 15));
-                var gaugeSize = Math.max(48, Math.min(Math.min(w, h) * 0.42, 116));
+                ui.tempLabels.classList.toggle('hidden', hideLabels);
+                els.gaugeLabel.classList.toggle('hidden', hideLabels || h < 145);
+                els.gauge.classList.toggle('hidden', hideGauge);
+                els.controlBar.classList.toggle('compact', compact);
 
-                root.style.setProperty('--fs-temp', tempSize.toFixed(1) + 'px');
-                root.style.setProperty('--fs-sub', subSize.toFixed(1) + 'px');
-                root.style.setProperty('--fs-title', titleSize.toFixed(1) + 'px');
-                root.style.setProperty('--fs-pill', Math.max(9, subSize * 0.92).toFixed(1) + 'px');
-                root.style.setProperty('--fs-gauge', Math.max(11, gaugeSize * 0.20).toFixed(1) + 'px');
-                root.style.setProperty('--gauge-size', gaugeSize.toFixed(0) + 'px');
-                root.style.setProperty('--gap', (compact ? 5 : 8) + 'px');
-
-                els.gaugeLabel.classList.toggle('hidden', compact);
-                els.tempLabelsTiny(tiny);
+                // Messschleife: so lange verkleinern, bis nichts mehr ueberlaeuft.
+                var scale = 1;
+                var opts = { compact: compact };
+                for (var i = 0; i < 18; i++) {
+                    applySizes(w, h, scale, opts);
+                    if (!hasOverflow(w, h)) { break; }
+                    scale -= 0.055;
+                    if (scale < 0.42) { scale = 0.42; break; }
+                }
             }
-
-            els.tempLabelsTiny = function (tiny) {
-                var labels = document.querySelector('.temp-labels');
-                if (labels) { labels.classList.toggle('hidden', tiny); }
-            };
 
             if (window.ResizeObserver) {
                 new ResizeObserver(applyScale).observe(els.tile);
