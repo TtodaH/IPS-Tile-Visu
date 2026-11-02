@@ -53,3 +53,13 @@
 - [x] 7.7 Echte Maus-Drags pruefen: 5 -> 20 -> 35 Grad C, Schreiben erst beim Loslassen
 - [x] 7.8 Tastaturbedienung als Ausweichweg (Pfeiltasten)
 
+## 8. Skalierung der Mittelscheibe (Nachtrag nach Live-Test)
+
+- [x] 8.1 Messschleife fuer die Mittelscheibe: Schrift setzen, Ueberlauf pruefen, verkleinern
+- [x] 8.2 Temperatur und Stellgroesse getrennt einpassen
+- [x] 8.3 Ring und Sollwert-Pille in den normalen Fluss setzen statt absolut positionieren
+- [x] 8.4 Ringdeckel auf 240 px anheben, damit grosse Kacheln den Platz nutzen
+- [x] 8.5 Schriftuntergrenze auf 6 px, damit auch 200x90 ohne Ueberlauf passt
+- [x] 8.6 12 Varianten von 200x90 bis 360x360 in beiden Themes ohne Ueberlauf pruefen
+
+

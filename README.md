@@ -297,9 +297,13 @@ dauerhaft.
 
 ### Skalierung
 
-Ringgroesse, Schriftgroessen, Strichstaerke und Thumb werden aus der tatsaechlichen
-Kachelgroesse berechnet und bei `resize` neu gesetzt, statt ueber feste Maximalwerte
-zu laufen.
+Ringgroesse, Strichstaerke und Thumb werden aus der tatsaechlichen Kachelgroesse
+berechnet und bei `resize` neu gesetzt, statt ueber feste Maximalwerte zu laufen.
+
+Die Schrift in der Mittelscheibe wird **gemessen**, nicht geschaetzt: Setzen,
+Ueberlauf pruefen, verkleinern, wiederholen — fuer Temperatur und Stellgroesse
+getrennt. Eine rechnerische Groesse ist bei wechselnder Textlaenge ("5,0 °C" gegen
+"-12,5 °C") immer an einer Stelle falsch.
 
 Der Ring bekommt nur die Flaeche, die nach Abzug des Symcon-Titelplatzes und der
 Sollwert-Pille uebrig bleibt — so ueberdeckt die Pille den Ring nie. Unter 115 px
