@@ -180,17 +180,29 @@
 
         /* ---------- Ring ---------- */
 
+        /* Ring und Sollwert-Pille stehen im normalen Fluss untereinander.
+           Eine absolut positionierte Pille haette immer einen Leerraum
+           erzeugt, sobald der Ring kleiner als die Flaeche ist. */
         .ring-area {
             flex: 1 1 auto;
             position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            min-height: 0;
+            min-width: 0;
+        }
+
+        .ring-wrap {
+            position: relative;
+            flex: 0 1 auto;
             display: flex;
             align-items: center;
             justify-content: center;
             min-height: 0;
             min-width: 0;
-            /* Platz fuer die Sollwert-Pille reservieren, damit der Ring sie
-               nicht ueberdeckt. Wird per JS gesetzt. */
-            padding-bottom: var(--pill-space, 18px);
         }
 
         .ring-svg {
@@ -262,12 +274,9 @@
             transition: color 0.25s ease;
         }
 
-        /* Sollwert-Label in der Ringluecke unten */
+        /* Sollwert-Label unter dem Ring, im normalen Fluss */
         .setpoint-pill {
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
+            flex: 0 0 auto;
             display: inline-flex;
             align-items: baseline;
             gap: 4px;
@@ -336,6 +345,7 @@
         </div>
 
         <div class="ring-area" id="ringArea">
+          <div class="ring-wrap" id="ringWrap">
             <svg class="ring-svg" id="ringSvg" viewBox="0 0 100 100" aria-hidden="true">
                 <!-- 270-Grad-Bogen: startet bei 135 Grad, Luecke unten -->
                 <circle class="ring-track" id="ringTrack" cx="50" cy="50" r="42"
@@ -352,6 +362,7 @@
                 <div class="room-temp" id="roomTempText">–</div>
                 <div class="center-sub" id="actuatorText">–</div>
             </div>
+          </div>
 
             <div class="setpoint-pill" id="setpointPill">
                 <span class="lbl">Soll</span>
@@ -441,21 +452,18 @@
                 var setpointSize = Math.max(9, Math.min(w * 0.048, 17));
                 root.style.setProperty('--fs-setpoint', setpointSize.toFixed(1) + 'px');
 
-                // Platz fuer die Pille reservieren, damit der Ring sie nicht ueberdeckt
                 var pillH = els.setpointPill.offsetHeight || setpointSize * 1.9;
-                var pillSpace = Math.min(pillH + 4, h * 0.28);
-                root.style.setProperty('--pill-space', pillSpace.toFixed(0) + 'px');
 
-                // Verbleibende Flaeche fuer den Ring
+                // Verbleibende Flaeche fuer den Ring: die Ringflaeche minus Pille
+                // und Zwischenabstand. Pille und Ring stehen im Fluss, deshalb
+                // wird hier nichts mehr absolut positioniert.
                 var availW = els.ringArea.clientWidth;
-                var availH = Math.max(0, els.ringArea.clientHeight - pillSpace);
+                var availH = Math.max(0, els.ringArea.clientHeight - pillH - 2);
 
                 var ring = Math.min(availW, availH);
-                ring = Math.max(36, Math.min(ring, 190));
+                ring = Math.max(36, Math.min(ring, 240));
 
                 root.style.setProperty('--ring-size', ring.toFixed(0) + 'px');
-                root.style.setProperty('--fs-temp', Math.max(10, Math.min(ring * 0.235, 44)).toFixed(1) + 'px');
-                root.style.setProperty('--fs-sub', Math.max(7.5, Math.min(ring * 0.088, 13)).toFixed(1) + 'px');
 
                 // Strich- und Thumb-Groesse relativ zum Ring
                 var stroke = Math.max(4, Math.min(ring * 0.072, 11));
@@ -466,7 +474,53 @@
                 els.ringThumb.setAttribute('r', (thumbR * (100 / ring)).toFixed(2));
                 els.ringThumb.setAttribute('stroke-width', Math.max(0.8, (ring * 0.008)).toFixed(2));
 
+                fitCenterText(ring);
                 setRing(state.setpoint, true);
+            }
+
+            /* ----------------------------------------------------------------
+             * Text in die Mittelscheibe einpassen.
+             *
+             * Eine rein rechnerische Schriftgroesse ist bei wechselnder
+             * Textlaenge ("5,0 °C" vs "-12,5 °C") immer an einer Stelle falsch.
+             * Deshalb wird gemessen: setzen, pruefen ob es ueberlaeuft,
+             * verkleinern, wiederholen.
+             * ---------------------------------------------------------------- */
+
+            function fitCenterText(ring) {
+                var root = document.documentElement;
+                var centerW = ring * 0.60;          // Durchmesser der Mittelscheibe
+                var centerH = centerW;
+                // Innenabstand der Scheibe, damit Text nicht am Rand klebt
+                var maxW = centerW * 0.90;
+                var maxH = centerH * 0.74;
+
+                var startTemp = Math.max(10, Math.min(ring * 0.30, 46));
+                var startSub  = Math.max(7,  Math.min(ring * 0.11, 14));
+
+                // Temperatur verkleinern, bis sie in Breite UND Hoehe passt
+                var temp = startTemp;
+                for (var i = 0; i < 24; i++) {
+                    root.style.setProperty('--fs-temp', temp.toFixed(1) + 'px');
+                    root.style.setProperty('--fs-sub', startSub.toFixed(1) + 'px');
+                    var tw = els.roomTemp.scrollWidth;
+                    var th = els.roomTemp.scrollHeight + els.actuator.scrollHeight;
+                    if (tw <= maxW && th <= maxH) { break; }
+                    temp -= Math.max(0.8, temp * 0.07);
+                    if (temp < 6) { temp = 6; break; }
+                }
+
+                // Stellgroesse zusaetzlich verkleinern, falls noetig
+                var sub = startSub;
+                root.style.setProperty('--fs-temp', temp.toFixed(1) + 'px');
+                for (var j = 0; j < 16; j++) {
+                    root.style.setProperty('--fs-sub', sub.toFixed(1) + 'px');
+                    var th2 = els.roomTemp.scrollHeight + els.actuator.scrollHeight;
+                    var tw2 = Math.max(els.roomTemp.scrollWidth, els.actuator.scrollWidth);
+                    if (th2 <= maxH && tw2 <= maxW) { break; }
+                    sub -= Math.max(0.5, sub * 0.08);
+                    if (sub < 6) { sub = 6; break; }
+                }
             }
 
             if (window.ResizeObserver) {
