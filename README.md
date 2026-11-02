@@ -254,10 +254,10 @@ Falls das historische Skript `34621.ips.php` parallel als Rückfallebene beruhig
 
 ## HeatingTile – Fussbodenheizung
 
-Kompakte Kachel fuer einen Fussbodenheizungs-Heizkreis. Zeigt Raumtemperatur,
-aktuellen Sollwert, Basissollwert und die Stellgroesse (0-100%) als Radial-Gauge.
-Der aktuelle Sollwert ist direkt in der Kachel einstellbar; der Basissollwert bleibt
-schreibgeschuetzt.
+Kompakte Kachel fuer einen Fussbodenheizungs-Heizkreis. Ein 270-Grad-Ring aussen
+ist das Bedienelement fuer den Sollwert, die Mitte zeigt die Raumtemperatur und die
+Stellgroesse. Der aktuelle Sollwert wird durch Ziehen am Ring oder per Pfeiltasten
+verstellt; der Basissollwert bleibt schreibgeschuetzt.
 
 ### Konfiguration
 
@@ -274,15 +274,22 @@ schreibgeschuetzt.
 
 ### Sollwert-Bedienung
 
-Slider plus Minus/Plus-Taster schreiben den Sollwert per `RequestAction` auf die
-konfigurierte KNX-Variable. Die Kachel prueft vorher, ob die Variable ueberhaupt
-schreibbar ist (eigene Action oder Parent-Instanz); ist sie es nicht, wird die
-Bedienleiste ausgeblendet statt ins Leere zu schreiben.
+Der Ring ist das Bedienelement: Ziehen setzt den Sollwert, die Pfeiltasten
+verstellen ihn in Schritten von `SetpointStep`. Geschrieben wird per
+`RequestAction` **erst beim Loslassen**, nicht bei jeder Bewegung — sonst wuerde
+jeder Zieh-Pixel den KNX-Bus fluten.
 
-Nach dem Senden springt der Slider sofort auf den neuen Wert. Kommt innerhalb von
-1,5 s kein Push vom Backend, kehrt die Anzeige auf den zuletzt bestaetigten Wert
-zurueck, damit sie nicht dauerhaft einen Wert vortaeuscht, den der Bus nie
-uebernommen hat.
+Der Sollwert steht live in der Pille unter dem Ring. Die Kachel prueft vorher, ob
+die Variable ueberhaupt schreibbar ist (eigene Action oder Parent-Instanz); ist sie
+es nicht, bleibt der Ring reine Anzeige statt ins Leere zu schreiben.
+
+Nach dem Senden zeigt der Ring sofort den neuen Wert. Kommt innerhalb von 1,5 s
+kein Push vom Backend, kehrt die Anzeige auf den zuletzt bestaetigten Wert zurueck,
+damit sie nicht dauerhaft einen Wert vortaeuscht, den der Bus nie uebernommen hat.
+
+Beim Winkel gilt: 135 Grad (unten links) ist der kleinste Wert, 270 Grad (oben) die
+Mitte, 45 Grad (unten rechts) der groesste. Die Luecke unten wird dem jeweils
+naechsten Ende zugeordnet.
 
 Bewusst **nicht** schreibbar ist der Basissollwert: er ist die Konfiguration des
 Regelkreises, und ihn versehentlich zu verschieben veraendert das Heizverhalten
@@ -290,10 +297,15 @@ dauerhaft.
 
 ### Skalierung
 
-Schriftgroessen und Gauge werden aus der tatsaechlichen Kachelgroesse berechnet und
-bei `resize` neu gesetzt, statt ueber feste Maximalwerte zu laufen. Eine Messschleife
-verkleinert die Schriften so lange, bis nichts mehr ueberlaeuft. Unter 130 px Hoehe
-blendet die Kachel das Gauge-Label aus, unter 100 px zusaetzlich die Soll-/Basis-Zeile.
+Ringgroesse, Schriftgroessen, Strichstaerke und Thumb werden aus der tatsaechlichen
+Kachelgroesse berechnet und bei `resize` neu gesetzt, statt ueber feste Maximalwerte
+zu laufen.
+
+Der Ring bekommt nur die Flaeche, die nach Abzug des Symcon-Titelplatzes und der
+Sollwert-Pille uebrig bleibt — so ueberdeckt die Pille den Ring nie. Unter 115 px
+Kachelhoehe entfaellt der eigene Kopf, weil IP-Symcon den Instanznamen ohnehin
+darueber zeichnet; die Sollwert-Pille bleibt in jeder Groesse sichtbar, damit beim
+Einstellen immer erkennbar ist, welcher Wert gesetzt wird.
 
 ### Platz fuer den Symcon-Titel
 

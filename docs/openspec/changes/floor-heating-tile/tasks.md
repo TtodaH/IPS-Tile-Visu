@@ -15,7 +15,7 @@
 ## 3. Frontend
 
 - [x] 3.1 Theme bootstrap identical to the existing tiles (`data-theme` before first paint)
-- [x] 3.2 Layout: room name, large room temperature, setpoint, base setpoint, radial actuator gauge
+- [x] 3.2 Layout: room name, large room temperature, setpoint, base setpoint, radial actuator gauge _(durch 7.1 ersetzt: Gauge und Slider-Leiste sind dem Bedienring gewichen)_
 - [x] 3.3 State pill with colour and label per derived state
 - [x] 3.4 `handleMessage()` updates values without DOM rebuild
 - [x] 3.5 Light theme variables for text, panel, gauge track and state colours
@@ -41,3 +41,15 @@
 - [x] 6.2 Vertikale Flaeche fuellen: Kopf, Werte, Gauge, Bedienleiste
 - [x] 6.3 Kompaktmodus fuer kleine Kacheln (Gauge-Label und Nebenwerte ausblenden)
 - [x] 6.4 In drei Groessen und beiden Themes visuell pruefen
+
+## 7. Bedienring statt Gauge (Nachtrag nach Design-Vorgabe)
+
+- [x] 7.1 Aussenring als Bedienelement: 270-Grad-Bogen mit Luecke unten, ziehbarer Thumb am Bogenende
+- [x] 7.2 Mitte als Anzeige: grosse Raumtemperatur, darunter die Stellgroesse in Prozent
+- [x] 7.3 Sollwert-Pille in der Ringluecke unten, beim Einstellen live aktualisiert
+- [x] 7.4 Platz fuer die Pille reservieren, damit der Ring sie nicht ueberdeckt
+- [x] 7.5 Kopf bei sehr flachen Kacheln ausblenden (Symcon zeichnet den Instanznamen)
+- [x] 7.6 Winkel-zu-Wert-Zuordnung der Luecke korrigiert (45 Grad = Maximum, 135 Grad = Minimum)
+- [x] 7.7 Echte Maus-Drags pruefen: 5 -> 20 -> 35 Grad C, Schreiben erst beim Loslassen
+- [x] 7.8 Tastaturbedienung als Ausweichweg (Pfeiltasten)
+
