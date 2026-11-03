@@ -75,4 +75,13 @@
 - [x] 9.9 Ziehen erneut pruefen: 0 Schreibvorgaenge waehrend der Bewegung, genau 1 beim Loslassen
 - [x] 9.10 Vier Zustaende in beiden Themes rendern und visuell pruefen
 
+## 10. Verlauf nachgeschaerft (Nachtrag nach Live-Test)
+
+- [x] 10.1 Haarlinien an den Segmentnahtstellen beseitigen: Segmente ueberlappen einander um 45 % der Segmentbreite
+- [x] 10.2 Runde Kappe am Bogenanfang, damit der Verlauf buendig unten links beginnt statt abgeschnitten zu wirken
+- [x] 10.3 Stuetzpunkte der Skala ungleichmaessig auf dem Bogen verteilen (`--grad-pos`)
+- [x] 10.4 Rot bereits bei 23 Grad erreichen statt erst am Reglerende bei 35 Grad
+- [x] 10.5 Farbverlauf ueber acht Sollwerte messen: Thumb-Farbe je Position pruefen
+- [x] 10.6 Startkappe in acht Varianten pruefen (r=5.5 ab dem ersten gefuellten Segment)
+
 

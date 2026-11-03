@@ -136,6 +136,21 @@ Der Verlauf SHALL entlang des Bogens verlaufen und in der Mitte neutrale Farben 
 - **WHEN** das Visualisierungsdesign wechselt
 - **THEN** liest die Kachel die fuenf Stuetzfarben der Skala aus den CSS-Variablen und verwendet im hellen Design kraeftigere Werte als im dunklen
 
+#### Scenario: Keine Nahtlinien zwischen den Segmenten
+
+- **WHEN** der gefuellte Bogen aus mehreren Segmenten zusammengesetzt ist
+- **THEN** ueberlappen sich benachbarte Segmente, sodass an den Nahtstellen keine Haarlinien sichtbar sind
+
+#### Scenario: Buendiger Bogenanfang
+
+- **WHEN** mindestens ein Segment gefuellt ist
+- **THEN** sitzt am Bogenanfang eine runde Kappe in der Farbe des kaltesten Stuetzpunkts, sodass der Verlauf unten links buendig beginnt statt abgeschnitten zu wirken
+
+#### Scenario: Warme Farbe frueh erreicht
+
+- **WHEN** der Sollwert 23 °C betraegt
+- **THEN** zeigt der Griff bereits einen roten Ton, weil die Stuetzpunkte der Skala ungleichmaessig auf dem Bogen verteilt sind (`--grad-pos`) und nicht dem Reglerbereich 5..35 °C folgen
+
 ### Requirement: State colour in the centre
 
 Die Zustandsfarbe SHALL im Mittelkreis liegen, nicht auf dem Ring, damit Zustand und Temperatur gleichzeitig ablesbar sind.

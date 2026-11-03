@@ -291,6 +291,28 @@ Nur der gefuellte Teil wird gezeichnet; der Rest bleibt der blasse Track-Kreis.
 Halbtransparente Segmente wuerden sich an den Nahtstellen ueberlagern und sichtbare
 Streifen bilden.
 
+Zwei Feinheiten, die im Live-Betrieb auffielen:
+
+- Benachbarte Segmente **ueberlappen** einander um 45 % der Segmentbreite. Stumpf
+  aneinanderstossende Boegen zeigen an den Nahtstellen Haarlinien, weil die
+  Kantenglaettung dort nicht deckt.
+- Am Bogenanfang sitzt eine **runde Kappe** in der Farbe des kaltesten
+  Stuetzpunkts. Die Spur darunter hat ein rundes Ende, die Segmente nicht — ohne
+  diese Kappe wirkt der Verlauf unten links abgeschnitten.
+
+Die Stuetzpunkte liegen **ungleichmaessig** auf dem Bogen (`--grad-pos`).
+Gleichmaessig verteilt waere Rot erst bei 35 °C erreicht und 23 °C noch orange.
+Fuer einen Wohnraum ist 23 °C bereits warm, deshalb ruecken die warmen
+Stuetzpunkte nach vorn:
+
+| Sollwert | Farbe am Griff |
+|---|---|
+| 12 °C | hellblau |
+| 18 °C | neutral bis warm |
+| 21 °C | orange |
+| **23 °C** | **rot** |
+| 26 °C und mehr | vollrot |
+
 ### Zustandsfarbe im Mittelkreis
 
 Der Betriebszustand liegt im **Mittelkreis**, nicht auf dem Ring: so sind Temperatur

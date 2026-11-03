@@ -68,6 +68,13 @@
             /* Nicht gefuellter Teil des Rings: blasse Vorschau der Skala */
             --grad-rest: 0.16;
 
+            /* Position der Stuetzpunkte auf dem Bogen (0 = kalt, 1 = warm).
+
+               Gleichmaessig verteilt waere Rot erst bei 35 Grad erreicht und
+               23 Grad noch orange. Fuer einen Wohnraum ist 23 Grad bereits
+               warm, deshalb ruecken die warmen Stuetzpunkte nach vorn. */
+            --grad-pos: 0, 0.16, 0.34, 0.48, 0.62;
+
             --state-color: var(--color-idle);
 
             /* Werden per JS aus der echten Kachelgroesse gesetzt */
@@ -259,6 +266,13 @@
             transition: fill 0.2s ease;
         }
 
+        /* Runde Kappe am Bogenanfang. Die Spur darunter hat ein rundes Ende,
+           die Segmente haben butt-Enden — ohne diese Kappe beginnt der
+           Farbverlauf sichtbar zu spaet und wirkt abgeschnitten. */
+        .ring-start-cap {
+            stroke: none;
+        }
+
         /* Center-Scheibe.
 
            Die Zustandsfarbe liegt jetzt hier statt auf dem Ring: der Ring
@@ -387,6 +401,7 @@
                 <!-- Segmente werden per JS erzeugt: je Bogenposition eine
                      Temperaturfarbe, zusammen ein Verlauf entlang des Bogens. -->
                 <g id="ringFillGroup"></g>
+                <circle class="ring-start-cap" id="ringStartCap" r="0"></circle>
                 <circle class="ring-thumb" id="ringThumb" cx="20.3" cy="79.7" r="5.5"></circle>
             </svg>
 
@@ -429,6 +444,7 @@
                 ringArea:   document.getElementById('ringArea'),
                 ringSvg:    document.getElementById('ringSvg'),
                 ringGroup:  document.getElementById('ringFillGroup'),
+                ringStartCap: document.getElementById('ringStartCap'),
                 ringThumb:  document.getElementById('ringThumb'),
                 ringCenter: document.querySelector('.ring-center'),
                 header:     document.querySelector('.tile-header'),
@@ -610,16 +626,19 @@
                 var stops = state.stops;
                 if (!stops || stops.length < 2) { return 'rgb(148,163,184)'; }
 
-                var pos = t * (stops.length - 1);
-                var i = Math.floor(pos);
-                if (i >= stops.length - 1) { i = stops.length - 2; pos = stops.length - 1; }
-                var f = pos - i;
+                // Stuetzpunkt-Paar suchen, zwischen dem t liegt
+                var i = 0;
+                while (i < stops.length - 2 && t > stops[i + 1].p) { i++; }
 
                 var a = stops[i];
                 var b = stops[i + 1];
-                var r = Math.round(a[0] + (b[0] - a[0]) * f);
-                var g = Math.round(a[1] + (b[1] - a[1]) * f);
-                var bl = Math.round(a[2] + (b[2] - a[2]) * f);
+                var span = b.p - a.p;
+                var f = span > 0 ? (t - a.p) / span : 0;
+                f = Math.max(0, Math.min(1, f));
+
+                var r = Math.round(a.rgb[0] + (b.rgb[0] - a.rgb[0]) * f);
+                var g = Math.round(a.rgb[1] + (b.rgb[1] - a.rgb[1]) * f);
+                var bl = Math.round(a.rgb[2] + (b.rgb[2] - a.rgb[2]) * f);
                 return 'rgb(' + r + ',' + g + ',' + bl + ')';
             }
 
@@ -628,11 +647,19 @@
             function readScaleColors() {
                 var cs = window.getComputedStyle(document.documentElement);
                 var defaults = ['#3B82F6', '#7DD3FC', '#94A3B8', '#FB923C', '#EF4444'];
-                state.stops = [];
+                var defaultPos = [0, 0.16, 0.34, 0.48, 0.62];
 
+                // Positionen der Stuetzpunkte auf dem Bogen
+                var rawPos = cs.getPropertyValue('--grad-pos').trim();
+                var pos = rawPos
+                    ? rawPos.split(',').map(function (s) { return parseFloat(s); })
+                    : defaultPos;
+
+                state.stops = [];
                 for (var i = 0; i < defaults.length; i++) {
                     var raw = cs.getPropertyValue('--grad-' + i).trim() || defaults[i];
-                    state.stops.push(hexToRgb(raw));
+                    var p = isNaN(pos[i]) ? defaultPos[i] : pos[i];
+                    state.stops.push({ p: p, rgb: hexToRgb(raw) });
                 }
 
                 state.restOpacity = parseFloat(cs.getPropertyValue('--grad-rest')) || 0.16;
@@ -645,11 +672,21 @@
                 state.segs = [];
                 readScaleColors();
 
+                // Jedes Segment reicht ein Stueck in das naechste hinein.
+                // Stumpf aneinanderstossende Boegen zeigen an den Nahtstellen
+                // Haarlinien, weil die Kantenglaettung dort nicht deckt.
+                var overlap = SWEEP / SEG_COUNT * 0.45;
+
                 for (var i = 0; i < SEG_COUNT; i++) {
                     var t0 = i / SEG_COUNT;
                     var t1 = (i + 1) / SEG_COUNT;
+                    var a0 = START_ANGLE + t0 * SWEEP;
+                    var a1 = START_ANGLE + t1 * SWEEP;
+                    if (i > 0) { a0 -= overlap; }
+                    if (i < SEG_COUNT - 1) { a1 += overlap; }
+
                     var seg = document.createElementNS(SVG_NS, 'path');
-                    seg.setAttribute('d', arcPath(START_ANGLE + t0 * SWEEP, START_ANGLE + t1 * SWEEP));
+                    seg.setAttribute('d', arcPath(a0, a1));
                     seg.setAttribute('class', 'ring-seg');
                     seg.setAttribute('stroke', scaleColor((t0 + t1) / 2));
                     els.ringGroup.appendChild(seg);
@@ -677,6 +714,18 @@
                 els.ringThumb.setAttribute('cx', (50 + RING_R * Math.cos(rad)).toFixed(2));
                 els.ringThumb.setAttribute('cy', (50 + RING_R * Math.sin(rad)).toFixed(2));
                 els.ringThumb.style.fill = scaleColor(t);
+
+                // Runde Kappe am Bogenanfang. Die Spur darunter hat ein rundes
+                // Ende, die Segmente nicht — ohne diese Kappe wirkt der Anfang
+                // abgeschnitten und der Verlauf beginnt sichtbar zu spaet.
+                var startRad = START_ANGLE * Math.PI / 180;
+                var capR = parseFloat(
+                    getComputedStyle(document.documentElement).getPropertyValue('--ring-stroke')
+                ) / 2 || 4;
+                els.ringStartCap.setAttribute('cx', (50 + RING_R * Math.cos(startRad)).toFixed(2));
+                els.ringStartCap.setAttribute('cy', (50 + RING_R * Math.sin(startRad)).toFixed(2));
+                els.ringStartCap.setAttribute('r', filled > 0 ? capR.toFixed(2) : '0');
+                els.ringStartCap.style.fill = scaleColor(0);
 
                 if (!silent) {
                     els.setpoint.textContent = formatTemp(value);
