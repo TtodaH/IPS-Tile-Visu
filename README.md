@@ -272,6 +272,35 @@ verstellt; der Basissollwert bleibt schreibgeschuetzt.
 | `SetpointMinimum` | kleinster Sollwert in °C | 5.0 |
 | `SetpointMaximum` | groesster Sollwert in °C | 35.0 |
 
+### Ringfarbe: Temperaturverlauf
+
+Der Ring zeigt die **Temperaturskala**, nicht den Betriebszustand. Er verlaeuft von
+Blau (kalt) ueber neutrale Zwischentoene nach Rot (warm).
+
+Ein einzelner linearer SVG-Verlauf kann einen 270-Grad-Bogen nicht abbilden: Anfang
+und Ende liegen beide unten, der Scheitel oben. Die Fuellung besteht deshalb aus 72
+Bogensegmenten, von denen jedes die Farbe seiner eigenen Skalenposition traegt.
+
+Die Skala hat fuenf Stuetzpunkte (Blau, Cyan, Neutralgrau, Orange, Rot). Eine
+direkte Mischung von Blau nach Rot wuerde in der Mitte Violett ergeben — bei einer
+Temperaturanzeige schlicht falsch. Die Stuetzfarben stehen als CSS-Variablen
+`--grad-0` bis `--grad-4`, damit helles und dunkles Design eigene, kontraststarke
+Werte verwenden.
+
+Nur der gefuellte Teil wird gezeichnet; der Rest bleibt der blasse Track-Kreis.
+Halbtransparente Segmente wuerden sich an den Nahtstellen ueberlagern und sichtbare
+Streifen bilden.
+
+### Zustandsfarbe im Mittelkreis
+
+Der Betriebszustand liegt im **Mittelkreis**, nicht auf dem Ring: so sind Temperatur
+und Zustand gleichzeitig ablesbar. Die Zustandsfarbe wird gedaempft eingemischt
+(etwa 9 % in den Hintergrund, 22 % in den Rand), damit sie die grosse
+Temperaturzahl nicht ueberstrahlt.
+
+Die Stellgroesse haelt ueber `--sub-gap` Abstand zur Temperaturzahl, damit der
+Prozentwert nicht an der grossen Zahl klebt.
+
 ### Sollwert-Bedienung
 
 Der Ring ist das Bedienelement: Ziehen setzt den Sollwert, die Pfeiltasten

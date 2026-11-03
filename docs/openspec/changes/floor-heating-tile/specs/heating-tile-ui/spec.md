@@ -109,3 +109,49 @@ Der Ring SHALL nur die Flaeche erhalten, die nach Abzug des Symcon-Titelplatzes 
 
 - **WHEN** IP-Symcon den Instanznamen ueber die Kachel zeichnet
 - **THEN** reserviert die Kachel dafuer einen Platzhalter von mindestens 18 px Hoehe, sodass kein Text ueberlappt
+
+### Requirement: Temperature gradient ring
+
+Der Ring SHALL die Temperaturskala als Farbverlauf von kalt nach warm darstellen, nicht die Zustandsfarbe.
+
+Der Verlauf SHALL entlang des Bogens verlaufen und in der Mitte neutrale Farben zeigen, damit keine falsche Zwischenfarbe wie Violett entsteht.
+
+#### Scenario: Verlauf entlang des Bogens
+
+- **WHEN** die Kachel geladen wird
+- **THEN** traegt jedes Bogensegment die Farbe seiner eigenen Skalenposition, sodass der gefuellte Bogen von Blau ueber neutrale Zwischentoene nach Rot verlaeuft
+
+#### Scenario: Kein Violett in der Mitte
+
+- **WHEN** der Sollwert in der Mitte des Wertebereichs liegt
+- **THEN** zeigt das mittlere Segment einen neutralen Grauton, nicht die direkte Mischung aus Blau und Rot
+
+#### Scenario: Ungefuellter Teil des Rings
+
+- **WHEN** der Sollwert unter dem Hoechstwert liegt
+- **THEN** bleibt der nicht gefuellte Teil einfarbig blass, ohne Streifen an den Segmentnahtstellen
+
+#### Scenario: Farben folgen dem Visualisierungsdesign
+
+- **WHEN** das Visualisierungsdesign wechselt
+- **THEN** liest die Kachel die fuenf Stuetzfarben der Skala aus den CSS-Variablen und verwendet im hellen Design kraeftigere Werte als im dunklen
+
+### Requirement: State colour in the centre
+
+Die Zustandsfarbe SHALL im Mittelkreis liegen, nicht auf dem Ring, damit Zustand und Temperatur gleichzeitig ablesbar sind.
+
+Sie SHALL gedaempft dargestellt werden, damit sie die grosse Temperaturzahl nicht ueberstrahlt.
+
+#### Scenario: Gedämpfte Zustandsfarbe
+
+- **WHEN** die Kachel einen der vier Zustaende anzeigt
+- **THEN** mischt der Mittelkreis die Zustandsfarbe mit etwa 9 % in den Hintergrund und mit etwa 22 % in den Rand, waehrend der Ring weiterhin den Temperaturverlauf zeigt
+
+### Requirement: Breathing room in the centre
+
+Die Ventilstellung SHALL deutlichen Abstand zur Temperaturzahl halten.
+
+#### Scenario: Abstand unter der Temperatur
+
+- **WHEN** die Kachel die Raumtemperatur und die Stellgroesse in der Mitte anzeigt
+- **THEN** liegt zwischen beiden ein ueber `--sub-gap` steuerbarer Abstand, sodass der Prozentwert nicht an der grossen Zahl klebt

@@ -56,6 +56,18 @@
             --color-idle: #64748B;
             --color-overshoot: #F59E0B;
 
+            /* Temperaturskala des Rings: kalt -> warm.
+               Bewusst mehrstufig: eine direkte Interpolation von Blau nach Rot
+               ergibt in der Mitte Violett, was bei einer Temperaturanzeige
+               falsch wirkt. Der Zwischenpunkt ist neutral. */
+            --grad-0: #3B82F6;
+            --grad-1: #7DD3FC;
+            --grad-2: #94A3B8;
+            --grad-3: #FB923C;
+            --grad-4: #EF4444;
+            /* Nicht gefuellter Teil des Rings: blasse Vorschau der Skala */
+            --grad-rest: 0.16;
+
             --state-color: var(--color-idle);
 
             /* Werden per JS aus der echten Kachelgroesse gesetzt */
@@ -84,6 +96,14 @@
             --color-holding: #047857;
             --color-idle: #475569;
             --color-overshoot: #B45309;
+
+            /* Auf hellem Grund braucht die Skala mehr Tiefe */
+            --grad-0: #2563EB;
+            --grad-1: #38BDF8;
+            --grad-2: #64748B;
+            --grad-3: #EA580C;
+            --grad-4: #DC2626;
+            --grad-rest: 0.22;
         }
 
         * { box-sizing: border-box; }
@@ -221,37 +241,47 @@
             stroke-linecap: round;
         }
 
-        .ring-fill {
+        /* Ringfuellung als Farbverlauf kalt -> warm.
+
+           Ein einzelner linearer SVG-Verlauf kann einen 270-Grad-Bogen nicht
+           sauber abbilden: Anfang und Ende liegen beide unten, der Scheitel
+           oben. Deshalb besteht die Fuellung aus vielen kleinen Segmenten,
+           von denen jedes die Temperaturfarbe seiner eigenen Bogenposition
+           traegt. Zusammen ergibt das einen echten Verlauf entlang des Bogens. */
+        .ring-seg {
             fill: none;
-            stroke: var(--state-color);
             stroke-width: var(--ring-stroke);
-            stroke-linecap: round;
-            transition: stroke-dashoffset 0.18s ease, stroke 0.25s ease;
+            stroke-linecap: butt;
         }
 
         .ring-thumb {
-            fill: var(--state-color);
             stroke: var(--symcon-card, #111);
-            transition: fill 0.25s ease;
+            transition: fill 0.2s ease;
         }
 
-        .ring-svg.is-dragging .ring-fill { transition: stroke 0.25s ease; }
+        /* Center-Scheibe.
 
-        /* Center-Scheibe */
+           Die Zustandsfarbe liegt jetzt hier statt auf dem Ring: der Ring
+           zeigt die Temperatur, der Kreis zeigt den Betriebszustand. Beides
+           in voller Saettigung waere zu laut, deshalb wird die Farbe nur
+           schwach eingemischt. */
         .ring-center {
             position: absolute;
             width: calc(var(--ring-size) * 0.60);
             height: calc(var(--ring-size) * 0.60);
             border-radius: 50%;
-            background: var(--panel-bg);
-            border: 1px solid var(--panel-border);
+            background:
+                color-mix(in srgb, var(--state-color) 9%, var(--panel-bg));
+            border: 1px solid
+                color-mix(in srgb, var(--state-color) 22%, var(--panel-border));
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 1px;
+            gap: 0;
             pointer-events: none;
             overflow: hidden;
+            transition: background 0.3s ease, border-color 0.3s ease;
         }
 
         .room-temp {
@@ -264,14 +294,17 @@
             white-space: nowrap;
         }
 
+        /* Ventilstellung: bewusst mit Abstand unter der Temperatur, damit die
+           grosse Zahl allein wirkt und der Prozentwert nicht daran klebt. */
         .center-sub {
             font-size: var(--fs-sub);
             font-weight: 600;
             line-height: 1.2;
-            color: var(--state-color);
+            margin-top: var(--sub-gap, 6px);
+            color: color-mix(in srgb, var(--state-color) 70%, var(--text-sub));
             font-variant-numeric: tabular-nums;
             white-space: nowrap;
-            transition: color 0.25s ease;
+            transition: color 0.3s ease;
         }
 
         /* Sollwert-Label unter dem Ring, im normalen Fluss */
@@ -351,10 +384,9 @@
                 <circle class="ring-track" id="ringTrack" cx="50" cy="50" r="42"
                         transform="rotate(135 50 50)"
                         stroke-dasharray="197.92 263.89"></circle>
-                <circle class="ring-fill" id="ringFill" cx="50" cy="50" r="42"
-                        transform="rotate(135 50 50)"
-                        stroke-dasharray="197.92 263.89"
-                        stroke-dashoffset="197.92"></circle>
+                <!-- Segmente werden per JS erzeugt: je Bogenposition eine
+                     Temperaturfarbe, zusammen ein Verlauf entlang des Bogens. -->
+                <g id="ringFillGroup"></g>
                 <circle class="ring-thumb" id="ringThumb" cx="20.3" cy="79.7" r="5.5"></circle>
             </svg>
 
@@ -396,8 +428,9 @@
                 setpointPill: document.getElementById('setpointPill'),
                 ringArea:   document.getElementById('ringArea'),
                 ringSvg:    document.getElementById('ringSvg'),
-                ringFill:   document.getElementById('ringFill'),
+                ringGroup:  document.getElementById('ringFillGroup'),
                 ringThumb:  document.getElementById('ringThumb'),
+                ringCenter: document.querySelector('.ring-center'),
                 header:     document.querySelector('.tile-header'),
                 configHint: document.getElementById('configHint'),
                 configText: document.getElementById('configHintText')
@@ -536,17 +569,114 @@
                 return Math.max(state.min, Math.min(state.max, v));
             }
 
+            var SVG_NS = 'http://www.w3.org/2000/svg';
+            var RING_R = 42;
+            var SEG_COUNT = 72;
+
+            function polarPoint(deg, r) {
+                var rad = deg * Math.PI / 180;
+                return { x: 50 + r * Math.cos(rad), y: 50 + r * Math.sin(rad) };
+            }
+
+            /* Bogenpfad von a0 nach a1 (Grad, im Uhrzeigersinn). */
+            function arcPath(a0, a1) {
+                var p0 = polarPoint(a0, RING_R);
+                var p1 = polarPoint(a1, RING_R);
+                var large = (a1 - a0) > 180 ? 1 : 0;
+                return 'M ' + p0.x.toFixed(3) + ' ' + p0.y.toFixed(3) +
+                       ' A ' + RING_R + ' ' + RING_R + ' 0 ' + large + ' 1 ' +
+                       p1.x.toFixed(3) + ' ' + p1.y.toFixed(3);
+            }
+
+            function hexToRgb(hex) {
+                var h = String(hex).trim().replace('#', '');
+                if (h.length === 3) {
+                    h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+                }
+                return [
+                    parseInt(h.substring(0, 2), 16),
+                    parseInt(h.substring(2, 4), 16),
+                    parseInt(h.substring(4, 6), 16)
+                ];
+            }
+
+            /* Farbe an einer Position der Skala: 0 = kalt, 1 = warm.
+
+               Zwischen den Stuetzpunkten wird linear gemischt. Eine direkte
+               Mischung von Blau nach Rot wuerde in der Mitte Violett ergeben,
+               deshalb liegen neutrale Zwischenfarben dazwischen. */
+            function scaleColor(t) {
+                t = Math.max(0, Math.min(1, t));
+                var stops = state.stops;
+                if (!stops || stops.length < 2) { return 'rgb(148,163,184)'; }
+
+                var pos = t * (stops.length - 1);
+                var i = Math.floor(pos);
+                if (i >= stops.length - 1) { i = stops.length - 2; pos = stops.length - 1; }
+                var f = pos - i;
+
+                var a = stops[i];
+                var b = stops[i + 1];
+                var r = Math.round(a[0] + (b[0] - a[0]) * f);
+                var g = Math.round(a[1] + (b[1] - a[1]) * f);
+                var bl = Math.round(a[2] + (b[2] - a[2]) * f);
+                return 'rgb(' + r + ',' + g + ',' + bl + ')';
+            }
+
+            /* Skalenfarben aus den CSS-Variablen lesen, damit hell und dunkel
+               jeweils ihre eigenen, kontraststarken Werte verwenden. */
+            function readScaleColors() {
+                var cs = window.getComputedStyle(document.documentElement);
+                var defaults = ['#3B82F6', '#7DD3FC', '#94A3B8', '#FB923C', '#EF4444'];
+                state.stops = [];
+
+                for (var i = 0; i < defaults.length; i++) {
+                    var raw = cs.getPropertyValue('--grad-' + i).trim() || defaults[i];
+                    state.stops.push(hexToRgb(raw));
+                }
+
+                state.restOpacity = parseFloat(cs.getPropertyValue('--grad-rest')) || 0.16;
+            }
+
+            /* Segmente einmal aufbauen; setRing aendert danach nur noch
+               Deckkraft und Thumb-Farbe. */
+            function buildRing() {
+                els.ringGroup.innerHTML = '';
+                state.segs = [];
+                readScaleColors();
+
+                for (var i = 0; i < SEG_COUNT; i++) {
+                    var t0 = i / SEG_COUNT;
+                    var t1 = (i + 1) / SEG_COUNT;
+                    var seg = document.createElementNS(SVG_NS, 'path');
+                    seg.setAttribute('d', arcPath(START_ANGLE + t0 * SWEEP, START_ANGLE + t1 * SWEEP));
+                    seg.setAttribute('class', 'ring-seg');
+                    seg.setAttribute('stroke', scaleColor((t0 + t1) / 2));
+                    els.ringGroup.appendChild(seg);
+                    state.segs.push(seg);
+                }
+            }
+
             function setRing(value, silent) {
                 var span = state.max - state.min;
                 var t = span > 0 ? (clamp(value) - state.min) / span : 0;
                 t = Math.max(0, Math.min(1, t));
 
-                els.ringFill.style.strokeDashoffset = (ARC * (1 - t)).toFixed(2);
+                if (!state.segs || state.segs.length === 0) { buildRing(); }
+
+                // Nur der gefuellte Teil wird gezeichnet. Der Rest bleibt der
+                // blasse Track-Kreis darunter: halbtransparente Segmente wuerden
+                // sich an den Nahtstellen ueberlagern und Streifen bilden.
+                var filled = Math.round(t * SEG_COUNT);
+                for (var i = 0; i < SEG_COUNT; i++) {
+                    state.segs[i].style.display = (i < filled) ? '' : 'none';
+                }
 
                 var deg = START_ANGLE + t * SWEEP;
                 var rad = deg * Math.PI / 180;
-                els.ringThumb.setAttribute('cx', (50 + 42 * Math.cos(rad)).toFixed(2));
-                els.ringThumb.setAttribute('cy', (50 + 42 * Math.sin(rad)).toFixed(2));
+                els.ringThumb.setAttribute('cx', (50 + RING_R * Math.cos(rad)).toFixed(2));
+                els.ringThumb.setAttribute('cy', (50 + RING_R * Math.sin(rad)).toFixed(2));
+                els.ringThumb.style.fill = scaleColor(t);
 
                 if (!silent) {
                     els.setpoint.textContent = formatTemp(value);
@@ -736,8 +866,14 @@
                         setRing(data.setpoint);
                     }
                 } else {
+                    // Kein Sollwert bekannt: Ring leer lassen statt einen
+                    // Fuellstand vorzutaeuschen.
                     els.setpoint.textContent = '–';
-                    els.ringFill.style.strokeDashoffset = ARC.toFixed(2);
+                    if (!state.segs || state.segs.length === 0) { buildRing(); }
+                    for (var k = 0; k < SEG_COUNT; k++) {
+                        state.segs[k].style.display = 'none';
+                    }
+                    els.ringThumb.style.fill = scaleColor(0);
                 }
 
                 applyScale();

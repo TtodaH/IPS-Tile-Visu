@@ -62,4 +62,17 @@
 - [x] 8.5 Schriftuntergrenze auf 6 px, damit auch 200x90 ohne Ueberlauf passt
 - [x] 8.6 12 Varianten von 200x90 bis 360x360 in beiden Themes ohne Ueberlauf pruefen
 
+## 9. Temperaturverlauf am Ring (Nachtrag nach Design-Vorgabe)
+
+- [x] 9.1 Ringfuellung von Zustandsfarbe auf Temperaturskala umstellen (kalt -> warm)
+- [x] 9.2 Verlauf aus 72 Bogensegmenten mit je eigener Farbe statt eines linearen SVG-Verlaufs
+- [x] 9.3 Mehrstufige Skala mit neutralem Zwischenpunkt, damit in der Mitte kein Violett entsteht
+- [x] 9.4 Skalenfarben als CSS-Variablen, je eigene Werte fuer hell und dunkel
+- [x] 9.5 Nur den gefuellten Teil zeichnen; der Rest bleibt der blasse Track (verhindert Streifen an den Nahtstellen)
+- [x] 9.6 Zustandsfarbe in den Mittelkreis uebertragen, gedaempft per color-mix (9 % Fuellung, 22 % Rand)
+- [x] 9.7 Abstand zwischen Temperatur und Ventilstellung ueber `--sub-gap` steuerbar machen
+- [x] 9.8 Segmentfarben an fuenf Stuetzpunkten messen: blau -> cyan -> neutral -> orange -> rot
+- [x] 9.9 Ziehen erneut pruefen: 0 Schreibvorgaenge waehrend der Bewegung, genau 1 beim Loslassen
+- [x] 9.10 Vier Zustaende in beiden Themes rendern und visuell pruefen
+
 
