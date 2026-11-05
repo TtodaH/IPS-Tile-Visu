@@ -28,6 +28,11 @@ Entwickelt für Garagentorantriebe (z.B. Hörmann, Sommer, Marantec, Novoferm, C
   - Warnhinweis bei Überschreiten einer frei definierbaren Zeit (z.B. Warnung ab 30 Minuten offen).
 - **Online-Status**:
   - Erkennt, ob der Shelly-Aktor online/erreichbar ist (z.B. über die Symcon-Variable `Erreichbar`), und blendet bei Verbindungsverlust eine Offline-Warnung ein.
+- **Zustandsfärbung des Tors**:
+  - Rahmen und Lamellen tragen die Zustandsfarbe: geschlossen grünlich, offen rötlich, in Bewegung blau bzw. bernstein.
+  - **Gemischt, nicht ersetzt**: die Grautöne bleiben erhalten, damit Schattierung und Tiefe der Lamellen nicht verloren gehen. Ohne diese Mischung wäre das Tor ein flacher Farbblock.
+  - Bei `Gestoppt` und `Offline` bleibt das Tor neutral — dann ist keine Aussage über offen oder geschlossen möglich, und eine Färbung würde eine vortäuschen.
+  - Zwei Stellschrauben: `--tint-frame` (Rahmen, Standard 30 %) und `--tint-slat` (Lamellen, Standard 18 %). Im hellen Design werden beide über `--tint-frame-scale` / `--tint-slat-scale` verstärkt, weil eine Zumischung auf hellem Grund schwächer wirkt.
 
 ---
 

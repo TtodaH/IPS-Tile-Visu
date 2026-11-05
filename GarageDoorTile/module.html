@@ -73,16 +73,30 @@
             --wall-top: #262830;
             --wall-bottom: #1B1C22;
             --wall-stroke: #353942;
-            --frame-edge: #3A3D46;
-            --frame-mid: #4E525E;
             --interior-top: #0A0C10;
             --interior-bottom: #15171E;
             --interior-glow: rgba(255, 235, 180, 0.15);
             --floor-line: #252A34;
-            --slat-1: #3E4450;
-            --slat-2: #333842;
-            --slat-3: #282C35;
-            --slat-4: #1E2127;
+
+            /* Roh-Toene des Tors. Die sichtbaren Variablen darunter mischen die
+               Zustandsfarbe ein; bei --tint-*: 0% bleibt das Tor neutral. */
+            --frame-edge-raw: #3A3D46;
+            --frame-mid-raw: #4E525E;
+            --slat-1-raw: #3E4450;
+            --slat-2-raw: #333842;
+            --slat-3-raw: #282C35;
+            --slat-4-raw: #1E2127;
+
+            --door-state: #64748B;
+            --tint-frame: 0%;
+            --tint-slat: 0%;
+
+            --frame-edge: color-mix(in srgb, var(--door-state) var(--tint-frame), var(--frame-edge-raw));
+            --frame-mid: color-mix(in srgb, var(--door-state) var(--tint-frame), var(--frame-mid-raw));
+            --slat-1: color-mix(in srgb, var(--door-state) var(--tint-slat), var(--slat-1-raw));
+            --slat-2: color-mix(in srgb, var(--door-state) var(--tint-slat), var(--slat-2-raw));
+            --slat-3: color-mix(in srgb, var(--door-state) var(--tint-slat), var(--slat-3-raw));
+            --slat-4: color-mix(in srgb, var(--door-state) var(--tint-slat), var(--slat-4-raw));
             --slat-stroke: #1A1C22;
             --slat-highlight: rgba(255, 255, 255, 0.15);
             --slat-line: #20232B;
@@ -115,16 +129,32 @@
             --wall-top: #EDF0F4;
             --wall-bottom: #DCE1E8;
             --wall-stroke: #C3CAD4;
-            --frame-edge: #C6CDD7;
-            --frame-mid: #DFE4EB;
             --interior-top: #8C97A6;
             --interior-bottom: #A7B1BE;
             --interior-glow: rgba(255, 214, 140, 0.24);
             --floor-line: #8C97A6;
-            --slat-1: #F5F7FA;
-            --slat-2: #EAEEF3;
-            --slat-3: #DDE2EA;
-            --slat-4: #CDD4DE;
+
+            /* Roh-Toene des Tors, helle Ausfuehrung.
+               Der Mischanteil ist hier GROESSER, nicht kleiner: eine Zumischung
+               auf hellem Grund wird vom Auge schwaecher wahrgenommen, weil der
+               Abstand zur Grundhelligkeit kleiner ist. Mit dem dunklen Anteil
+               bliebe das Tor praktisch neutral. */
+            --frame-edge-raw: #C6CDD7;
+            --frame-mid-raw: #DFE4EB;
+            --slat-1-raw: #F5F7FA;
+            --slat-2-raw: #EAEEF3;
+            --slat-3-raw: #DDE2EA;
+            --slat-4-raw: #CDD4DE;
+
+            --tint-frame-scale: 1.5;
+            --tint-slat-scale: 1.35;
+
+            --frame-edge: color-mix(in srgb, var(--door-state) calc(var(--tint-frame) * var(--tint-frame-scale)), var(--frame-edge-raw));
+            --frame-mid: color-mix(in srgb, var(--door-state) calc(var(--tint-frame) * var(--tint-frame-scale)), var(--frame-mid-raw));
+            --slat-1: color-mix(in srgb, var(--door-state) calc(var(--tint-slat) * var(--tint-slat-scale)), var(--slat-1-raw));
+            --slat-2: color-mix(in srgb, var(--door-state) calc(var(--tint-slat) * var(--tint-slat-scale)), var(--slat-2-raw));
+            --slat-3: color-mix(in srgb, var(--door-state) calc(var(--tint-slat) * var(--tint-slat-scale)), var(--slat-3-raw));
+            --slat-4: color-mix(in srgb, var(--door-state) calc(var(--tint-slat) * var(--tint-slat-scale)), var(--slat-4-raw));
             --slat-stroke: #B7C0CC;
             --slat-highlight: rgba(255, 255, 255, 0.9);
             --slat-line: #C2C9D4;
@@ -868,6 +898,21 @@
                 } else {
                     statusPill.classList.remove('pulsing');
                 }
+
+                // Torgrafik in der Zustandsfarbe toenen.
+                //
+                // GEMISCHT, nicht ersetzt: die Grautoene tragen die Schattierung
+                // der Lamellen. Ein Ersetzen wuerde das Tor zu einem Farbblock
+                // machen. Bei unbekanntem Zustand bleibt der Anteil bei 0 %, das
+                // Tor also neutral — dann ist keine Aussage ueber offen oder zu
+                // moeglich, und eine Faerbung wuerde eine vortaeuschen.
+                const root = document.documentElement;
+                const known = (data.state === 'open' || data.state === 'closed' ||
+                               data.state === 'opening' || data.state === 'closing');
+
+                root.style.setProperty('--door-state', col);
+                root.style.setProperty('--tint-frame', known ? '30%' : '0%');
+                root.style.setProperty('--tint-slat', known ? '18%' : '0%');
             }
 
             // 4. Torposition & Sektionaltor-Verschiebung
