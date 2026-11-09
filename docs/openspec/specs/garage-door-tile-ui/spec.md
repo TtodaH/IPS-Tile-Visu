@@ -16,6 +16,10 @@ The system SHALL provide a responsive, theme-blended HTML-SDK tile displaying th
 - **WHEN** the user taps or clicks the control button in the right column
 - **THEN** the frontend calls requestAction('triggerDoor', true) and applies an active ripple state
 
+#### Scenario: User touches garage door graphic
+- **WHEN** the user taps, clicks, or presses Enter/Space on the garage door visual
+- **THEN** the frontend calls requestAction('triggerDoor', true) and displays visual press and impulse feedback
+
 #### Scenario: Resizing or expanding tile to desktop or modal dimensions
 - **WHEN** the tile container is enlarged beyond smartphone dimensions (e.g. tablet, desktop 2x2, or fullscreen modal)
 - **THEN** the sectional garage door SVG automatically scales up to utilize the maximum available width and height while maintaining its 3:2 aspect ratio, without compressing or overflowing the control buttons

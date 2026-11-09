@@ -350,12 +350,42 @@
             align-items: center;
             justify-content: center;
             position: relative;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            transition: transform 0.15s ease, filter 0.15s ease;
+            outline: none;
+            border-radius: 8px;
+        }
+
+        .garage-svg-wrap:hover {
+            filter: brightness(1.08);
+        }
+
+        .garage-svg-wrap:focus-visible {
+            outline: 2px solid var(--color-opening);
+            outline-offset: 3px;
+        }
+
+        .garage-svg-wrap:active {
+            transform: scale(0.975);
+        }
+
+        .garage-svg-wrap.impulse-active .garage-svg {
+            animation: door-impulse-glow 0.8s ease-out;
+        }
+
+        @keyframes door-impulse-glow {
+            0% { filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.7)); }
+            100% { filter: drop-shadow(var(--art-shadow)); }
         }
 
         .garage-svg {
             width: 100%;
             height: 100%;
             filter: drop-shadow(var(--art-shadow));
+            transition: filter 0.25s ease;
         }
 
         /* Slats sliding animation */
@@ -433,6 +463,7 @@
             backdrop-filter: blur(4px);
             -webkit-backdrop-filter: blur(4px);
             letter-spacing: 0.2px;
+            pointer-events: none;
         }
 
         /* 3. Footer / Button & Meta Row */
@@ -645,8 +676,8 @@
         <div class="tile-content-row">
             <!-- Linke Spalte: Sektionaltor-Grafik -->
             <div class="garage-col">
-<div class="garage-svg-wrap">
-                <svg class="garage-svg" viewBox="0 0 180 120" xmlns="http://www.w3.org/2000/svg">
+                <div class="garage-svg-wrap" id="garageDoorWrap" role="button" tabindex="0" onclick="handleDoorClick()" onkeydown="handleDoorKeyDown(event)" title="Garagentor bedienen" aria-label="Garagentor bedienen">
+                    <svg class="garage-svg" viewBox="0 0 180 120" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                         <!-- Clip-Pfad für den Torrahmen (damit hochfahrende Lamellen oben sauber abgeschnitten werden) -->
                         <clipPath id="doorOpeningClip">
@@ -836,11 +867,26 @@
                 }, 800);
             }
 
+            const doorWrap = document.getElementById('garageDoorWrap');
+            if (doorWrap) {
+                doorWrap.classList.add('impulse-active');
+                setTimeout(() => {
+                    doorWrap.classList.remove('impulse-active');
+                }, 800);
+            }
+
             // Aufruf der nativen IP-Symcon Aktion
             if (typeof requestAction === 'function') {
                 requestAction('triggerDoor', true);
             } else {
                 console.log("requestAction('triggerDoor', true) triggered (Web SDK Preview)");
+            }
+        }
+
+        function handleDoorKeyDown(event) {
+            if (event.key === 'Enter' || event.key === ' ' || event.code === 'Space') {
+                event.preventDefault();
+                handleDoorClick();
             }
         }
 
@@ -958,8 +1004,15 @@
             const btnText = document.getElementById('btnText');
             const btnSvgPath = document.getElementById('btnSvgPath');
             const triggerBtn = document.getElementById('triggerBtn');
+            const doorWrap = document.getElementById('garageDoorWrap');
+            const actionLabel = data.buttonText || 'Öffnen';
+
+            if (doorWrap) {
+                doorWrap.title = `Garagentor: ${actionLabel}`;
+                doorWrap.setAttribute('aria-label', `Garagentor ${data.stateText ? '(' + data.stateText + ')' : ''}: Klicken zum ${actionLabel}`);
+            }
             if (btnText) {
-                btnText.textContent = data.buttonText || 'Öffnen';
+                btnText.textContent = actionLabel;
             }
             if (triggerBtn && data.stateColor) {
                 // Feine Umrandung passend zum Zustand
@@ -984,6 +1037,13 @@
                     impulseInd.classList.add('active');
                 } else {
                     impulseInd.classList.remove('active');
+                }
+            }
+            if (doorWrap) {
+                if (data.impulseActive) {
+                    doorWrap.classList.add('impulse-active');
+                } else {
+                    doorWrap.classList.remove('impulse-active');
                 }
             }
 
